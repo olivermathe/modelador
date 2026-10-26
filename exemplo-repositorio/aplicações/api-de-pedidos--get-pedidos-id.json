@@ -1,0 +1,10 @@
+{
+  "id": "5e9d0000-0000-4000-8000-000000000002",
+  "type": "endpoint",
+  "name": "GET /pedidos/{id}",
+  "description": "Consulta um pedido",
+  "owner": "Time Pedidos",
+  "impact": "changed",
+  "method": "GET",
+  "path": "/pedidos/{id}"
+}

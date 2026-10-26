@@ -1,0 +1,9 @@
+{
+  "id": "9c3d0000-0000-4000-8000-000000000001",
+  "kind": "flow",
+  "sourceId": "3f1c2a10-0000-4000-8000-000000000001",
+  "targetId": "5e9d0000-0000-4000-8000-000000000001",
+  "label": "Cria pedidos",
+  "protocol": "HTTPS/JSON",
+  "relType": "triggering"
+}

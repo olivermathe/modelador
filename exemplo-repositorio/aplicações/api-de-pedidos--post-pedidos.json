@@ -1,0 +1,9 @@
+{
+  "id": "5e9d0000-0000-4000-8000-000000000001",
+  "type": "endpoint",
+  "name": "POST /pedidos",
+  "description": "Cria um pedido",
+  "owner": "Time Pedidos",
+  "method": "POST",
+  "path": "/pedidos"
+}

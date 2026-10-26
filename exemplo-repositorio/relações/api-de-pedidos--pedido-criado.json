@@ -1,0 +1,10 @@
+{
+  "id": "9c3d0000-0000-4000-8000-000000000003",
+  "kind": "flow",
+  "sourceId": "3f1c2a10-0000-4000-8000-000000000002",
+  "targetId": "3f1c2a10-0000-4000-8000-000000000004",
+  "label": "Publica evento",
+  "protocol": "Kafka",
+  "impact": "new",
+  "relType": "flow"
+}

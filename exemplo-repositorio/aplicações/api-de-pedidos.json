@@ -1,0 +1,7 @@
+{
+  "id": "3f1c2a10-0000-4000-8000-000000000002",
+  "type": "service",
+  "name": "API de Pedidos",
+  "description": "Cria e consulta pedidos.",
+  "owner": "Time Pedidos"
+}

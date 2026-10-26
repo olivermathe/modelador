@@ -1,0 +1,40 @@
+{
+  "name": "modelador",
+  "version": "0.1.0",
+  "description": "Ferramenta de modelagem de arquitetura com biblioteca de componentes compartilhada",
+  "main": "./out/main/index.js",
+  "author": "Matheus Oliveira",
+  "private": true,
+  "scripts": {
+    "dev": "electron-vite dev",
+    "build": "npm run typecheck && electron-vite build",
+    "preview": "electron-vite preview",
+    "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
+    "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
+    "typecheck": "npm run typecheck:node && npm run typecheck:web",
+    "test:e2e": "npm run build && electron scripts/e2e/smoke.cjs && electron scripts/e2e/duplicate.cjs && electron scripts/e2e/features.cjs && electron scripts/e2e/nesting.cjs && electron scripts/e2e/rename.cjs && electron scripts/e2e/undo.cjs && electron scripts/e2e/delete.cjs && electron scripts/e2e/select.cjs && electron scripts/e2e/direction.cjs && electron scripts/e2e/template.cjs && electron scripts/e2e/aliases.cjs"
+  },
+  "dependencies": {
+    "@xyflow/react": "^12.3.6",
+    "dompurify": "^3.2.6",
+    "html-to-image": "^1.11.11",
+    "lucide-react": "^0.468.0",
+    "marked": "^15.0.12",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "zustand": "^5.0.2"
+  },
+  "devDependencies": {
+    "@tailwindcss/typography": "^0.5.16",
+    "@tailwindcss/vite": "^4.0.0",
+    "@types/node": "^20.17.10",
+    "@types/react": "^18.3.17",
+    "@types/react-dom": "^18.3.5",
+    "@vitejs/plugin-react": "^4.3.4",
+    "electron": "^33.2.1",
+    "electron-vite": "^2.3.0",
+    "tailwindcss": "^4.0.0",
+    "typescript": "^5.7.2",
+    "vite": "^5.4.11"
+  }
+}

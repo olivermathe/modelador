@@ -1,0 +1,8 @@
+{
+  "id": "3f1c2a10-0000-4000-8000-000000000004",
+  "type": "queue",
+  "name": "pedido-criado",
+  "description": "Evento publicado quando um pedido é criado.",
+  "owner": "Time Pedidos",
+  "impact": "new"
+}
