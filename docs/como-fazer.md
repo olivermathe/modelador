@@ -14,7 +14,8 @@
    mover em grupo, travar), `scripts/e2e/direction.cjs` (direção das ligações) e `scripts/e2e/template.cjs`
    (feature a partir de pasta modelo), `scripts/e2e/aliases.cjs` (pastas em português/inglês) e
    `scripts/e2e/connectors.cjs` (ligações visuais entre formas) e `scripts/e2e/border.cjs` (ligar em qualquer
-   ponto da borda) e `scripts/e2e/legend.cjs` (legenda de impacto). Cada um termina com `Tudo certo` (código 0)
+   ponto da borda) e `scripts/e2e/legend.cjs` (legenda de impacto) e
+   `scripts/e2e/markdown-images.cjs` (imagens no preview do Markdown). Cada um termina com `Tudo certo` (código 0)
    ou lista as falhas (código 1). O caminho temporário impresso no fim tem o repositório resultante e as
    capturas de tela.
 3. Para mudanças visuais, tire uma captura no teste (`await t.shot('nome.png')`) e confira a imagem.

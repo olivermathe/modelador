@@ -14,6 +14,7 @@ const api = {
   writeRepo: (root: string, changes: unknown): Promise<void> => ipcRenderer.invoke('repo:write', root, changes),
   exportImage: (dataUrl: string, defaultName: string): Promise<string | null> =>
     ipcRenderer.invoke('export:image', dataUrl, defaultName),
+  readImage: (root: string, path: string): Promise<string | null> => ipcRenderer.invoke('repo:readImage', root, path),
   pickTemplate: (): Promise<string | null> => ipcRenderer.invoke('template:pick'),
   readTemplate: (folder: string): Promise<{ files: { path: string; base64: string }[]; dirs: string[] }> =>
     ipcRenderer.invoke('template:read', folder),

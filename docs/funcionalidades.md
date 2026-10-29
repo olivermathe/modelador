@@ -46,8 +46,10 @@ Caminhos relativos a `src/renderer/src/` (exceto onde indicado).
 | Nova feature a partir de pasta modelo | `FeatureDialog.tsx` (escolha e prévia); main `template:pick`, `template:read`; store `createFeatureFromTemplate`, `pendingFiles`, `templateOriginals`; `fileActions.ts` `saveRepo` (grava base64 e originais) |
 | Nova feature (pasta com diagrama, processo e documento) | `components/FeatureDialog.tsx`; store `createFeature`, `openFeatureDialog`; botões em `Toolbar.tsx` e `RepoPanel.tsx` |
 | Editor Markdown com pré-visualização | `components/MarkdownEditor.tsx` (`marked` + `DOMPurify`, links abrem fora) |
+| Imagens locais no preview do Markdown | `MarkdownEditor.tsx` (`useLocalImages`, `resolveImage`); main `repo:readImage`; preload `readImage` |
 | Exportar JPEG | `components/exportImage.ts`; main `export:image`; menu ⌘E |
 | Pastas em português ou inglês | main `FOLDER_ALIASES`, `locateFolders`, `safePath`; scan devolve `folders`; store `folderNames`, `displayPath` |
+| Logo e ícones do app | `resources/icon.svg` (fonte), `scripts/icon.cjs` (`npm run icon`), `resources/icon.png`, `build/icon.icns`, `build/icon.ico`; main `ICON`, `app.dock.setIcon`; `Toolbar.tsx` (logo ao lado do nome) |
 | Migração de formatos antigos | `model/repo.ts` `parseScan` (endpoints dentro do serviço, `parentId` → Composição) |
 
 ## Atalhos

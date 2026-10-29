@@ -4,6 +4,7 @@ import { openRepo, reloadRepo, saveRepo } from '@/model/fileActions'
 import { fileStem } from '@/model/repo'
 import { useModel } from '@/model/store'
 import { useExportJpeg } from './exportImage'
+import logo from '../../../../resources/icon.svg'
 
 function ToolbarButton({
   onClick,
@@ -80,7 +81,9 @@ export function Toolbar(): JSX.Element {
 
   return (
     <header className="flex h-12 shrink-0 items-center gap-1 border-b border-slate-200 bg-white px-3">
-      <span className="mr-3 text-sm font-semibold text-slate-900">Modelador</span>
+      <span className="mr-3 flex items-center gap-1.5 text-sm font-semibold text-slate-900">
+        <img src={logo} alt="" className="h-7 w-7" draggable={false} /> Modelador
+      </span>
       <ToolbarButton onClick={openRepo} title="Abrir repositório (⌘O)">
         <FolderOpen className="h-4 w-4" /> Abrir pasta
       </ToolbarButton>

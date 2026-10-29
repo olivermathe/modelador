@@ -21,6 +21,22 @@ const FOLDER_ALIASES: Record<string, string[]> = {
 /** Limite da pasta modelo (tudo é lido para a memória até o Salvar). */
 const TEMPLATE_MAX_BYTES = 20 * 1024 * 1024
 
+/** Logo do app (gerada de resources/icon.svg por `npm run icon`). */
+const ICON = join(__dirname, '../../resources/icon.png')
+
+// Sem empacotar, o macOS mostraria "Electron" no menu do app
+app.setName('Modelador')
+
+/** Imagens que o preview do Markdown pode mostrar (extensão → tipo). */
+const IMAGE_TYPES: Record<string, string> = {
+  png: 'image/png',
+  jpg: 'image/jpeg',
+  jpeg: 'image/jpeg',
+  gif: 'image/gif',
+  webp: 'image/webp',
+  svg: 'image/svg+xml'
+}
+
 /** Arquivos maiores que isso são listados, mas não lidos. */
 const MAX_FILE_SIZE = 2 * 1024 * 1024
 
@@ -162,6 +178,7 @@ function createWindow(): void {
     minWidth: 960,
     minHeight: 600,
     title: 'Modelador',
+    icon: ICON,
     show: false,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -310,6 +327,19 @@ function registerIpc(): void {
     return result.canceled || result.filePaths.length === 0 ? null : result.filePaths[0]
   })
 
+  // Imagem referenciada num Markdown (só leitura, só imagens, só dentro do repositório)
+  ipcMain.handle('repo:readImage', async (_event, root: string, relPath: string) => {
+    const type = IMAGE_TYPES[relPath.split('.').pop()?.toLowerCase() ?? '']
+    if (!type) return null
+    try {
+      const data = await readFile(await safePath(root, relPath))
+      if (data.length > TEMPLATE_MAX_BYTES) return null
+      return `data:${type};base64,${data.toString('base64')}`
+    } catch {
+      return null
+    }
+  })
+
   ipcMain.handle('template:read', async (_event, folder: string) => {
     const files: { path: string; base64: string }[] = []
     const dirs: string[] = []
@@ -358,6 +388,8 @@ function registerIpc(): void {
 }
 
 app.whenReady().then(() => {
+  // Ícone do Dock (empacotado, vem do .icns; aqui substitui o do Electron em desenvolvimento)
+  if (process.platform === 'darwin') app.dock?.setIcon(ICON)
   buildMenu()
   registerIpc()
   createWindow()

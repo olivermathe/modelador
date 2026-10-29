@@ -9,7 +9,11 @@ pasta de repositório — ideal para versionar com Git e compartilhar com o time
 npm install
 npm run dev      # app em modo desenvolvimento
 npm run build    # typecheck + build em out/
+npm run icon     # regera os ícones a partir de resources/icon.svg
 ```
+
+A logo fica em `resources/icon.svg`. `npm run icon` gera `resources/icon.png` (janela e Dock) e
+`build/icon.icns` / `build/icon.ico` (para empacotar no macOS e no Windows).
 
 Para experimentar, abra a pasta `exemplo-repositorio/` pelo botão **Abrir pasta**.
 
@@ -119,7 +123,8 @@ arquivos próprios).
 - **Guias de alinhamento**: ao arrastar, linhas magenta aparecem quando bordas ou centros se alinham com outro
   item, e o item encaixa na posição.
 - **Markdown**: passe o mouse numa pasta de `projetos/` e clique em "Novo documento". O editor tem os modos
-  Editar, Dividido e Visualizar.
+  Editar, Dividido e Visualizar. Imagens com caminho relativo ao documento (`![Diagrama](./tecnico.jpg)`,
+  `../imagens/x.png`) aparecem no preview; elas precisam estar dentro das pastas do repositório.
 - **Exportar JPEG** (⌘E): gera uma imagem do desenho inteiro em alta resolução, no local que você escolher.
 - **Desfazer/refazer**: Ctrl+Z ou ⌘Z desfaz; ⇧⌘Z, Ctrl+Shift+Z ou Ctrl+Y refaz (também nos botões da barra). Um
   arrasto ou uma digitação seguida é um passo só. Num campo de texto, desfaz a digitação. Funciona depois de

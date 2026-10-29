@@ -16,6 +16,12 @@ run(async (t) => {
   const edges = await t.js(`document.querySelectorAll('.react-flow__edge').length`)
   t.assert(nodes === 6 && shapes === 2 && edges === 5, `desenho com 6 recursos, 2 formas, 5 ligações (${nodes}/${shapes}/${edges})`)
 
+  t.step('logo do app na barra superior e nome do app')
+  const logo = await t.js(`{ const i = document.querySelector('header img'); !!i && i.complete && i.naturalWidth > 0 }`)
+  t.assert(logo, 'logo carregada na barra')
+  const appName = require('electron').app.getName()
+  t.assert(appName === 'Modelador', `nome do app: ${appName}`)
+
   t.step('impacto só na cor da borda, sem rótulo')
   const impact = JSON.parse(await t.js(`{
     const node = [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes('pedido-criado'));
