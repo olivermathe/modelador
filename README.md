@@ -133,6 +133,17 @@ arquivos próprios).
   exemplo, depois de um `git pull`).
 - O app reabre automaticamente o último repositório usado.
 
+## Cadastrar com outro agente de IA
+
+[docs/skills/cadastrar-recursos-e-ligacoes/SKILL.md](docs/skills/cadastrar-recursos-e-ligacoes/SKILL.md) é
+uma skill para qualquer agente de IA cadastrar recursos, endpoints, tecnologias e ligações escrevendo os
+arquivos JSON direto no repositório, sem usar a interface. Copie a pasta da skill para onde o seu agente lê
+skills (ou cole o conteúdo do `SKILL.md` no prompt). No fim, o agente roda o validador:
+
+```bash
+node docs/skills/cadastrar-recursos-e-ligacoes/validar.mjs <pasta-do-repositorio>
+```
+
 ## Código
 
 Documentação de manutenção (arquitetura, formato dos arquivos, regras que não podem quebrar, testes) em

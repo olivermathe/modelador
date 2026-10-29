@@ -13,7 +13,7 @@
     "typecheck:node": "tsc --noEmit -p tsconfig.node.json",
     "typecheck:web": "tsc --noEmit -p tsconfig.web.json",
     "typecheck": "npm run typecheck:node && npm run typecheck:web",
-    "test:e2e": "npm run build && electron scripts/e2e/smoke.cjs && electron scripts/e2e/duplicate.cjs && electron scripts/e2e/features.cjs && electron scripts/e2e/nesting.cjs && electron scripts/e2e/rename.cjs && electron scripts/e2e/undo.cjs && electron scripts/e2e/delete.cjs && electron scripts/e2e/select.cjs && electron scripts/e2e/direction.cjs && electron scripts/e2e/template.cjs && electron scripts/e2e/aliases.cjs && electron scripts/e2e/connectors.cjs && electron scripts/e2e/border.cjs && electron scripts/e2e/legend.cjs && electron scripts/e2e/markdown-images.cjs"
+    "test:e2e": "npm run build && electron scripts/e2e/smoke.cjs && electron scripts/e2e/duplicate.cjs && electron scripts/e2e/features.cjs && electron scripts/e2e/nesting.cjs && electron scripts/e2e/rename.cjs && electron scripts/e2e/undo.cjs && electron scripts/e2e/delete.cjs && electron scripts/e2e/select.cjs && electron scripts/e2e/direction.cjs && electron scripts/e2e/template.cjs && electron scripts/e2e/aliases.cjs && electron scripts/e2e/connectors.cjs && electron scripts/e2e/border.cjs && electron scripts/e2e/legend.cjs && electron scripts/e2e/markdown-images.cjs && electron scripts/e2e/skill.cjs"
   },
   "dependencies": {
     "@xyflow/react": "^12.3.6",

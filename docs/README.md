@@ -12,6 +12,7 @@ Documentação para quem for dar manutenção no Modelador, pessoa ou agente de 
 | [funcionalidades.md](funcionalidades.md) | Mapa funcionalidade → arquivos. Ponto de partida para qualquer ajuste. |
 | [como-fazer.md](como-fazer.md) | Receitas para mudanças comuns e como verificar o trabalho. |
 | [decisoes.md](decisoes.md) | Por que as coisas são como são (histórico de pedidos e escolhas). |
+| [skills/cadastrar-recursos-e-ligacoes/](skills/cadastrar-recursos-e-ligacoes/SKILL.md) | Para **usuários**: skill para outro agente de IA cadastrar recursos, tecnologias e ligações escrevendo os JSON direto (sem a interface), com validador `validar.mjs`. |
 
 ## Resumo em 30 segundos
 

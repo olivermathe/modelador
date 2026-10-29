@@ -12,7 +12,9 @@ arquitetura sobre uma pasta-repositório versionada com Git. Interface e coment�
 2. Use [docs/funcionalidades.md](docs/funcionalidades.md) para achar o código de cada funcionalidade e
    [docs/arquitetura.md](docs/arquitetura.md) para o fluxo de dados.
 3. Mudou formato de arquivo? Atualize [docs/formato-do-repositorio.md](docs/formato-do-repositorio.md)
-   e mantenha a leitura do formato antigo (migração em memória, gravada só no Salvar).
+   e mantenha a leitura do formato antigo (migração em memória, gravada só no Salvar). Atualize também a
+   skill [docs/skills/cadastrar-recursos-e-ligacoes/](docs/skills/cadastrar-recursos-e-ligacoes/SKILL.md)
+   (texto e `validar.mjs`), que repete essas regras para agentes externos.
 
 ## Comandos
 
