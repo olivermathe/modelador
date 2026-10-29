@@ -102,7 +102,7 @@ export interface DiagramNode {
   height?: number
 }
 
-export type ShapeKind = 'rectangle' | 'rounded' | 'ellipse' | 'text'
+export type ShapeKind = 'rectangle' | 'rounded' | 'ellipse' | 'text' | 'legend'
 
 /** Forma livre (estilo draw.io): existe só dentro do desenho. */
 export interface Shape {
@@ -133,6 +133,24 @@ export interface Diagram {
    * conector, ex.: "top-2"). Ausente = escolhido automaticamente.
    */
   anchors?: Record<string, EdgeAnchors>
+  /** Ligações só visuais (formas ↔ formas/recursos). Não são relações: não vão para `relações/`. */
+  connectors?: Connector[]
+}
+
+/** Ligação visual do desenho: liga formas (ou forma e recurso) só para ilustrar. */
+export interface Connector {
+  id: string
+  /** Ids de forma ou de recurso no desenho. */
+  source: string
+  target: string
+  sourceHandle?: string
+  targetHandle?: string
+  label?: string
+  /** Pontas com seta; ausente = seta no fim. */
+  arrow?: 'end' | 'both' | 'none'
+  dashed?: boolean
+  /** Cor da linha; ausente = cinza. */
+  color?: string
 }
 
 export interface EdgeAnchors {
@@ -145,6 +163,7 @@ export type Selection =
   | { kind: 'technology'; id: string }
   | { kind: 'relation'; id: string }
   | { kind: 'shape'; id: string }
+  | { kind: 'connector'; id: string }
   | null
 
 /** Resultado da leitura da pasta pelo processo principal. */

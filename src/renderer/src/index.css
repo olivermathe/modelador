@@ -46,6 +46,53 @@ body,
   border-color: #0ea5e9;
 }
 
+/* Faixas invisíveis nas bordas: com Ligar ativa, a ligação começa/termina em qualquer ponto da borda */
+.react-flow__handle.anchor-border {
+  min-width: 0;
+  min-height: 0;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.react-flow__handle.anchor-border-top,
+.react-flow__handle.anchor-border-bottom {
+  left: 0;
+  width: 100%;
+  height: 12px;
+  transform: translate(0, -50%);
+}
+
+.react-flow__handle.anchor-border-bottom {
+  top: auto;
+  transform: translate(0, 50%);
+}
+
+.react-flow__handle.anchor-border-left,
+.react-flow__handle.anchor-border-right {
+  top: 0;
+  height: 100%;
+  width: 12px;
+  transform: translate(-50%, 0);
+}
+
+.react-flow__handle.anchor-border-right {
+  left: auto;
+  transform: translate(50%, 0);
+}
+
+.tool-connect .react-flow__handle.anchor-border {
+  opacity: 1;
+  pointer-events: all;
+  cursor: crosshair;
+}
+
+.tool-connect .react-flow__handle.anchor-border:hover {
+  background: rgba(14, 165, 233, 0.25);
+}
+
 /* Com Ligar ativa, as pontas das setas podem ser arrastadas para outro ponto */
 .tool-connect .react-flow__edgeupdater {
   cursor: crosshair;

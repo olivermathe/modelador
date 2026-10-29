@@ -131,10 +131,11 @@ Tipos ArchiMate (`model/archimate.ts`): `composition`, `aggregation`, `assignmen
 | `nodes[].x`, `y` | Arredondados para inteiro ao gravar. |
 | `nodes[].z` | Ordem de empilhamento compartilhada com as formas. Opcional (= 0). |
 | `nodes[].width`, `height` | Tamanho escolhido pelo usuário **neste desenho**. Opcional (= automático). |
+| `connectors` | Ligações **só visuais** entre formas (ou forma e recurso): `{ id, source, target, sourceHandle?, targetHandle?, label?, arrow?: "end"\|"both"\|"none", dashed?, color? }`. Não são relações: nada vai para a pasta de relações. Omitido quando vazio; ligações com ponta que saiu do desenho não são gravadas. |
 | `nodes[].locked`, `shapes[].locked` | `true` = travado neste desenho (não move nem é selecionado). Omitido quando destravado. |
 | `edges` | Relações `flow` exibidas; só aparecem se as duas pontas têm nó no desenho. |
-| `shapes` | Formas livres (`rectangle`, `rounded`, `ellipse`, `text`). Omitido quando vazio. |
-| `anchors` | `{ "<id da relação>": { "source": "right-1", "target": "top-5" } }`: ponto de conexão escolhido em cada ponta. Ids: `top-1`…`top-5`, `bottom-1`…`bottom-5`, `left-1`…`left-3`, `right-1`…`right-3`. Ponta sem ponto = automático. Só setas presentes em `edges` são gravadas; omitido quando vazio. |
+| `shapes` | Formas livres (`rectangle`, `rounded`, `ellipse`, `text`, `legend`). `legend` é o quadrinho de legenda das cores de impacto: `text` é o título; as cores não são gravadas (vêm do app). Omitido quando vazio. |
+| `anchors` | `{ "<id da relação>": { "source": "right-1", "target": "top-5" } }`: ponto de conexão escolhido em cada ponta. Ids: `top-1`…`top-5`, `bottom-1`…`bottom-5`, `left-1`…`left-3`, `right-1`…`right-3`, ou um ponto livre da borda `<lado>@<porcentagem>` (ex.: `top@70`, a 70% da largura no lado de cima; `left@25`, a 25% da altura no lado esquerdo). Vale também para `sourceHandle`/`targetHandle` dos `connectors`. Ponta sem ponto = automático. Só setas presentes em `edges` são gravadas; omitido quando vazio. |
 
 Um arquivo em `projetos/` só é desenho se tiver `nodes` como array; senão é "outro arquivo".
 

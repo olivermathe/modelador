@@ -3,6 +3,7 @@ import {
   REPO_FOLDERS,
   type AccessMode,
   type ArchimateRelType,
+  type Connector,
   type Diagram,
   type HttpMethod,
   type Impact,
@@ -91,7 +92,7 @@ export function endpointName(method: string | undefined, path: string | undefine
 function parseShape(s: Record<string, unknown>): Shape {
   return {
     id: String(s.id ?? crypto.randomUUID()),
-    kind: (['rectangle', 'rounded', 'ellipse', 'text'] as const).find((k) => k === s.kind) ?? 'rectangle',
+    kind: (['rectangle', 'rounded', 'ellipse', 'text', 'legend'] as const).find((k) => k === s.kind) ?? 'rectangle',
     x: Number(s.x) || 0,
     y: Number(s.y) || 0,
     width: Number(s.width) || 160,
@@ -222,6 +223,13 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
         shapes: Array.isArray(data.shapes) ? data.shapes.filter(isObject).map(parseShape) : [],
         ...(isObject(data.anchors) && Object.keys(data.anchors).length
           ? { anchors: data.anchors as Diagram['anchors'] }
+          : {}),
+        ...(Array.isArray(data.connectors) && data.connectors.length
+          ? {
+              connectors: data.connectors
+                .filter((c): c is Record<string, unknown> => isObject(c) && typeof c.source === 'string' && typeof c.target === 'string')
+                .map((c) => c as unknown as Connector)
+            }
           : {})
       }
     } else {
@@ -314,6 +322,12 @@ export function computePaths(c: RepoContent): Record<string, string> {
   return paths
 }
 
+function connectorsToSave(d: Diagram): Diagram['connectors'] {
+  const present = new Set([...d.nodes.map((n) => n.resourceId), ...d.shapes.map((sh) => sh.id)])
+  const kept = (d.connectors ?? []).filter((c) => present.has(c.source) && present.has(c.target))
+  return kept.length ? kept : undefined
+}
+
 function anchorsToSave(d: Diagram): Diagram['anchors'] {
   const kept = Object.entries(d.anchors ?? {}).filter(([id, a]) => d.edges.includes(id) && (a.source || a.target))
   return kept.length ? Object.fromEntries(kept) : undefined
@@ -343,7 +357,9 @@ export function computeFiles(c: RepoContent): { files: Record<string, string>; p
         ? d.shapes.map((s) => ({ ...s, x: Math.round(s.x), y: Math.round(s.y), width: Math.round(s.width), height: Math.round(s.height) }))
         : undefined,
       // Só pontos de conexão escolhidos manualmente, e só de setas que estão no desenho
-      anchors: anchorsToSave(d)
+      anchors: anchorsToSave(d),
+      // Ligações visuais só das formas/recursos que ainda estão no desenho
+      connectors: connectorsToSave(d)
     })
   }
   for (const [path, text] of Object.entries(c.docs)) files[path] = text

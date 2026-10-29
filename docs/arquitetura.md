@@ -106,7 +106,11 @@ App.tsx
 - **Pontos de conexão**: cada nó de recurso tem 16 `Handle` (`ANCHOR_POINTS` em `dnd.ts`). Ficam
   invisíveis e sem clique, a não ser com a ferramenta **Ligar** (`tool` no store; classe `tool-connect` no
   contêiner do canvas; CSS `.anchor-point`). O ponto usado vai para `diagram.anchors`; sem ele, a seta usa
-  `centerAnchor()` do lado que encara a outra ponta (`facingSides`).
+  `centerAnchor()` do lado que encara a outra ponta (`facingSides`). **Pontos livres** (`top@70`,
+  `parseAnchor`/`anchorAt` em `dnd.ts`): `AnchorHandles.tsx` desenha faixas nas bordas (`BORDER_HANDLES`,
+  CSS `.anchor-border`) e um `Handle` para cada ponto livre já usado no desenho (`data.anchors`, calculado em
+  `Canvas.tsx`). A ligação é resolvida em `onConnectEnd`/`onReconnectEnd` pela posição do mouse (`dropTarget`),
+  não em `onConnect`; o ponto de início na faixa fica em `borderStart`.
 - **Pilha**: recursos e formas compartilham `z`; `zIndex` do nó = `z * 2` e as setas ficam logo abaixo
   do recurso mais ao fundo, para não sumirem atrás de um contêiner. Seta com ponta dentro de outro recurso
   fica logo acima desse recurso de fora (`zFor`), para aparecer inteira até a ponta.

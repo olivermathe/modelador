@@ -86,9 +86,16 @@ arquivos próprios).
   recursos que já estão lá aparecem sozinhas. Ligar dois recursos que já têm uma ligação entre si abre a
   pergunta: usar a existente ou criar uma nova, mantendo as duas.
 - **Impacto**: recursos, endpoints e relações têm Sem alteração / Novo / Alterado / Excluído. É a única cor do
-  desenho: sem impacto, tudo fica em cinza neutro; Novo é verde, Alterado laranja e Excluído vermelho tracejado.
+  desenho, só na borda (sem rótulo escrito): sem impacto, cinza neutro; Novo verde, Alterado laranja e Excluído
+  vermelho tracejado.
 - **Tecnologias**: no painel do recurso, "+ Tecnologias" abre uma lista com busca para marcar várias; digite
   nomes separados por vírgula para criar e ligar de uma vez.
+- **Ligações entre formas**: com a ferramenta Ligar, arraste de uma forma para outra forma (ou para um recurso).
+  É uma ligação só visual: fica no desenho, não vira relação de arquitetura. No painel: rótulo, seta, linha
+  tracejada e cor.
+- **Legenda de impacto**: arraste o ícone de legenda (em Formas, na Paleta) para o desenho. O quadrinho mostra
+  o que cada cor significa (borda dos recursos e cor das setas); dois cliques editam o título, e ele se
+  move, redimensiona e trava como uma forma.
 - **Formas**: arraste Retângulo, Quadrado, Elipse ou Texto. Dois cliques editam o texto; com a forma selecionada,
   arraste os cantos para redimensionar e use o painel para cores, borda e tamanho do texto.
 - **Tamanho dos recursos**: selecione o recurso e arraste as alças dos cantos/bordas. O tamanho vale só para
@@ -96,8 +103,10 @@ arquivos próprios).
   ficar escondido. "Voltar ao tamanho automático" no painel desfaz.
 - **Ligar recursos**: ative a ferramenta **Ligar** (botão no canto do desenho, tecla L, ou escolhendo um tipo
   em "Nova ligação" na Paleta). Os pontos de conexão aparecem só com ela ativa: arraste de um ponto até outro
-  recurso. O ponto escolhido fica guardado; arrastar a ponta de uma seta troca o ponto. Esc ou V volta a
-  Selecionar.
+  recurso. Não precisa mirar nas bolinhas: comece em qualquer ponto da borda (ela fica azulada ao passar o
+  mouse) e solte em qualquer lugar do outro recurso; a seta encosta no ponto da borda mais perto de onde você
+  soltou. O ponto escolhido fica guardado; arrastar a ponta de uma seta troca o ponto (também em qualquer
+  parte da borda). Esc ou V volta a Selecionar.
 - **Nova feature**: botão na barra superior (ou o ícone ao passar o mouse numa pasta de `projetos/`). Pede
   nome, número no Azure DevOps, pasta, ano e trimestre, e cria `<ano>-<trimestre>-<número>-<nome>/` com
   `diagrama.json`, `processo.json` e `doc.md`, ou, em "Copiar de uma pasta modelo", com uma cópia exata da pasta

@@ -1,10 +1,10 @@
-import { Handle, NodeResizer, Position, type Node, type NodeProps } from '@xyflow/react'
+import { NodeResizer, type Node, type NodeProps } from '@xyflow/react'
 import { memo, useLayoutEffect, useRef, useState } from 'react'
 import { ELEMENT_TYPES, impactInfo } from '@/model/elementTypes'
 import { useModel } from '@/model/store'
 import { commitEndpointRoute } from './EndpointRouteEditor'
 import type { Resource } from '@/model/types'
-import { ANCHOR_POINTS } from './dnd'
+import { AnchorHandles } from './AnchorHandles'
 import { LockBadge } from './LockBadge'
 
 export type ElementNodeData = {
@@ -16,25 +16,17 @@ export type ElementNodeData = {
   sized: boolean
   /** Travado neste desenho. */
   locked: boolean
+  /** Pontos livres da borda usados por ligações deste desenho. */
+  anchors: string[]
 }
 export type ElementFlowNode = Node<ElementNodeData, 'element'>
 
-const SIDES = { top: Position.Top, right: Position.Right, bottom: Position.Bottom, left: Position.Left }
 
 /** Largura mínima ao redimensionar; abaixo disso o texto quebraria letra a letra. */
 const MIN_WIDTH = 160
 /** Borda de 2px em cima e embaixo. */
 const BORDER = 4
 
-function ImpactBadge({ resource }: { resource: Resource }): JSX.Element | null {
-  if (!resource.impact) return null
-  const info = impactInfo(resource.impact)
-  return (
-    <span className={`shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase ${info.badge}`}>
-      {info.label}
-    </span>
-  )
-}
 
 /** Campo de texto no próprio nó: Enter ou clicar fora confirma, Esc cancela. */
 function InlineEdit({
@@ -137,16 +129,7 @@ function ElementNodeComponent({ id, data, selected }: NodeProps<ElementFlowNode>
       >
         {locked && <LockBadge id={id} />}
         {/* Pontos de conexão: só aparecem com a ferramenta Ligar (CSS em index.css) */}
-        {ANCHOR_POINTS.map((a) => (
-          <Handle
-            key={a.id}
-            id={a.id}
-            type="source"
-            position={SIDES[a.side]}
-            className="anchor-point"
-            style={a.side === 'top' || a.side === 'bottom' ? { left: `${a.offset}%` } : { top: `${a.offset}%` }}
-          />
-        ))}
+        <AnchorHandles nodeId={id} extra={data.anchors} />
         <div ref={contentRef} className="flex items-start gap-2 px-3 py-2.5">
           {/* Só o ícone identifica o tipo; o nome do tipo aparece ao passar o mouse */}
           <span title={info.label} className="mt-0.5 shrink-0">
@@ -188,7 +171,6 @@ function ElementNodeComponent({ id, data, selected }: NodeProps<ElementFlowNode>
               </div>
             )}
           </div>
-          <ImpactBadge resource={resource} />
         </div>
       </div>
     </>

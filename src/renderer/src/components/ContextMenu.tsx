@@ -20,7 +20,7 @@ export interface ContextMenuState {
   y: number
   /** Item clicado. */
   id: string
-  kind: 'resource' | 'shape' | 'relation'
+  kind: 'resource' | 'shape' | 'relation' | 'connector'
   /** Recursos/formas e ligações a que as ações se aplicam (o item clicado, ou a seleção múltipla). */
   items: string[]
   edges: string[]
@@ -61,8 +61,17 @@ function Item({
 }
 
 export function ContextMenu({ menu, onClose }: { menu: ContextMenuState; onClose: () => void }): JSX.Element {
-  const { reorder, duplicateShape, removeFromDiagram, removeEdgesFromDiagram, setLocked, setMultiSelection, reverseRelation } =
-    useModel.getState()
+  const {
+    reorder,
+    duplicateShape,
+    removeFromDiagram,
+    removeEdgesFromDiagram,
+    setLocked,
+    setMultiSelection,
+    reverseRelation,
+    reverseConnector
+  } = useModel.getState()
+  const relations = useModel((s) => s.relations)
   const diagram = useModel((s) => (s.activeDiagram ? s.diagrams[s.activeDiagram] : undefined))
 
   useEffect(() => {
@@ -87,13 +96,15 @@ export function ContextMenu({ menu, onClose }: { menu: ContextMenuState; onClose
   const isLocked = (id: string): boolean =>
     !!(diagram?.nodes.find((n) => n.resourceId === id)?.locked || diagram?.shapes.find((sh) => sh.id === id)?.locked)
   const many = menu.items.length + menu.edges.length > 1
-  const single = !many && menu.kind !== 'relation'
+  const isEdge = menu.kind === 'relation' || menu.kind === 'connector'
+  const single = !many && !isEdge
   const lockable = menu.items
   const allLocked = lockable.length > 0 && lockable.every(isLocked)
   const resources = menu.items.filter((id) => !isShape(id))
   const permanent = [
     ...resources.map((id) => ({ kind: 'resource' as const, id })),
-    ...menu.edges.map((id) => ({ kind: 'relation' as const, id }))
+    // Ligações visuais (connectors) só existem no desenho: não entram na exclusão permanente
+    ...menu.edges.filter((id) => relations[id]).map((id) => ({ kind: 'relation' as const, id }))
   ]
   const removeFromDrawing = (): void => {
     if (menu.edges.length) removeEdgesFromDiagram(menu.edges)
@@ -135,16 +146,22 @@ export function ContextMenu({ menu, onClose }: { menu: ContextMenuState; onClose
           <Item icon={Copy} label="Duplicar" shortcut="⌘D" onClick={run(() => duplicateShape(menu.id))} />
         )}
         {(lockable.length > 0 || (single && menu.kind === 'shape')) && <div className="my-1 border-t border-slate-100" />}
-        {!many && menu.kind === 'relation' && (
+        {!many && isEdge && (
           <>
-            <Item icon={ArrowLeftRight} label="Inverter direção" onClick={run(() => reverseRelation(menu.id))} />
+            <Item
+              icon={ArrowLeftRight}
+              label="Inverter direção"
+              onClick={run(() => (menu.kind === 'connector' ? reverseConnector(menu.id) : reverseRelation(menu.id)))}
+            />
             <div className="my-1 border-t border-slate-100" />
           </>
         )}
         {/* Dois jeitos de apagar: só deste desenho, ou de vez (todos os desenhos e o arquivo) */}
         <Item
           icon={EyeOff}
-          label={!many && menu.kind === 'shape' ? 'Excluir forma' : 'Remover do desenho'}
+          label={
+            !many && menu.kind === 'shape' ? 'Excluir forma' : !many && menu.kind === 'connector' ? 'Excluir ligação' : 'Remover do desenho'
+          }
           shortcut="⌫"
           onClick={run(removeFromDrawing)}
         />

@@ -2,6 +2,7 @@ import {
   Background,
   ConnectionMode,
   Controls,
+  MarkerType,
   MiniMap,
   Panel,
   Position,
@@ -9,7 +10,9 @@ import {
   SelectionMode,
   useReactFlow,
   ViewportPortal,
-  type Connection,
+  getBezierPath,
+  type ConnectionLineComponentProps,
+  type FinalConnectionState,
   type Edge,
   type EdgeChange,
   type Node,
@@ -25,7 +28,8 @@ import { ownersOf, selectedIds, technologiesOf, useModel, type ZOrderOp } from '
 import { ArchimateMarkers, markerId, SELECTED_STROKE } from './ArchimateMarkers'
 import { ContextMenu, type ContextMenuState } from './ContextMenu'
 import { askPermanentDelete } from './deleteActions'
-import { centerAnchor, DND_MIME, getDragPayload, isAnchorId } from './dnd'
+import { borderStart } from './AnchorHandles'
+import { anchorAt, centerAnchor, DND_MIME, getDragPayload, isAnchorId, isBorderHandle, isFreeAnchor, parseAnchor } from './dnd'
 import { ElementNode, type ElementFlowNode } from './ElementNode'
 import { ShapeNode, type ShapeFlowNode } from './ShapeNode'
 import { ToolSwitch } from './ToolSwitch'
@@ -54,6 +58,77 @@ function facingSides(a: { x: number; y: number }, b: { x: number; y: number }): 
 const isEditingText = (): boolean => {
   const el = document.activeElement
   return !!el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.tagName === 'SELECT')
+}
+
+const noop = (): void => undefined
+
+/**
+ * Item e ponto de conexão onde a ligação foi solta: um ponto fixo (bolinha) sob o mouse, ou o ponto
+ * da borda mais perto do mouse no item de cima (soltar no meio do item também vale).
+ */
+function dropTarget(event: MouseEvent | TouchEvent): { nodeId: string; anchor: string } | undefined {
+  const p = 'changedTouches' in event ? event.changedTouches[0] : event
+  if (!p) return undefined
+  // Primeiro elemento (o de cima) que é um ponto fixo ou parte de um item
+  const top = document
+    .elementsFromPoint(p.clientX, p.clientY)
+    .find((el) => el.classList.contains('anchor-point') || el.closest('.react-flow__node'))
+  const topNode = top?.closest<HTMLElement>('.react-flow__node')
+  const dotId = top?.classList.contains('anchor-point') && top.getAttribute('data-handleid')
+  if (topNode?.dataset.id && dotId) return { nodeId: topNode.dataset.id, anchor: dotId }
+  // Itens travados não recebem o mouse: procura pelo retângulo, do mais alto para o mais baixo
+  const node =
+    topNode ??
+    [...document.querySelectorAll<HTMLElement>('.react-flow__node')]
+      .filter((el) => {
+        const r = el.getBoundingClientRect()
+        return p.clientX >= r.left && p.clientX <= r.right && p.clientY >= r.top && p.clientY <= r.bottom
+      })
+      .sort((a, b) => Number(b.style.zIndex || 0) - Number(a.style.zIndex || 0))[0]
+  const id = node?.dataset.id
+  // Os pontos ficam posicionados em relação ao pai das faixas da borda (a caixa do item)
+  const box = node?.querySelector('.anchor-border')?.parentElement
+  if (!id || !box) return undefined
+  return { nodeId: id, anchor: anchorAt(box.getBoundingClientRect(), p.clientX, p.clientY) }
+}
+
+/** Linha durante o arrasto: começa no ponto da borda onde o usuário clicou (não no meio da faixa). */
+function BorderConnectionLine({
+  fromNode,
+  fromHandle,
+  fromX,
+  fromY,
+  fromPosition,
+  toX,
+  toY,
+  toPosition,
+  connectionLineStyle
+}: ConnectionLineComponentProps): JSX.Element {
+  let x = fromX
+  let y = fromY
+  const start = borderStart.current
+  if (isBorderHandle(fromHandle.id) && start?.nodeId === fromNode.id) {
+    const a = parseAnchor(start.anchor)
+    const { x: nx, y: ny } = fromNode.internals.positionAbsolute
+    const w = fromNode.measured.width ?? 0
+    const h = fromNode.measured.height ?? 0
+    if (a?.side === 'top' || a?.side === 'bottom') {
+      x = nx + (w * a.offset) / 100
+      y = a.side === 'top' ? ny : ny + h
+    } else if (a) {
+      y = ny + (h * a.offset) / 100
+      x = a.side === 'left' ? nx : nx + w
+    }
+  }
+  const [path] = getBezierPath({
+    sourceX: x,
+    sourceY: y,
+    sourcePosition: fromPosition,
+    targetX: toX,
+    targetY: toY,
+    targetPosition: toPosition
+  })
+  return <path d={path} fill="none" className="react-flow__connection-path" style={connectionLineStyle} />
 }
 
 export function Canvas(): JSX.Element {
@@ -86,6 +161,8 @@ export function Canvas(): JSX.Element {
     removeEdgesFromDiagram,
     resizeNode,
     setEdgeAnchors,
+    addConnector,
+    updateConnector,
     setTool,
     setHiddenEdges,
     notify
@@ -106,6 +183,22 @@ export function Canvas(): JSX.Element {
 
   const nodes = useMemo<FlowNode[]>(() => {
     if (!diagram) return []
+    // Pontos livres da borda usados pelas setas deste desenho, por item
+    const free = new Map<string, Set<string>>()
+    const addFree = (nodeId: string, anchor: string | undefined): void => {
+      if (isFreeAnchor(anchor)) free.set(nodeId, (free.get(nodeId) ?? new Set()).add(anchor))
+    }
+    for (const id of diagram.edges) {
+      const rel = relations[id]
+      if (!rel) continue
+      addFree(rel.sourceId, diagram.anchors?.[id]?.source)
+      addFree(rel.targetId, diagram.anchors?.[id]?.target)
+    }
+    for (const c of diagram.connectors ?? []) {
+      addFree(c.source, c.sourceHandle)
+      addFree(c.target, c.targetHandle)
+    }
+    const freeOf = (nodeId: string): string[] => [...(free.get(nodeId) ?? [])].sort()
     const elementNodes: ElementFlowNode[] = diagram.nodes
       .filter((n) => resources[n.resourceId])
       .map((n) => {
@@ -120,6 +213,7 @@ export function Canvas(): JSX.Element {
             sized: !!(n.width && n.height),
             resource,
             locked: !!n.locked,
+            anchors: freeOf(n.resourceId),
             technologies: technologiesOf(n.resourceId, relations, technologies).map((t) => t.technology.name),
             parentName:
               resource.type === 'endpoint'
@@ -141,7 +235,7 @@ export function Canvas(): JSX.Element {
       width: shape.width,
       height: shape.height,
       zIndex: (shape.z ?? 0) * 2,
-      data: { shape },
+      data: { shape, anchors: freeOf(shape.id) },
       selected: selected.items.has(shape.id),
       measured: measured[shape.id],
       ...(shape.locked ? { draggable: false, selectable: false, style: { pointerEvents: 'none' as const } } : {})
@@ -198,7 +292,42 @@ export function Canvas(): JSX.Element {
       return Math.max(...outer.map((c) => nodeById.get(c.id)?.z ?? 0)) * 2 + 1
     }
 
-    return diagram.edges.flatMap((id) => {
+    // Ligações só visuais (formas): cinza por padrão, cor/traço/seta escolhidos no painel
+    const itemPos = new Map<string, { x: number; y: number; z: number }>([
+      ...diagram.nodes.map((n) => [n.resourceId, { x: n.x, y: n.y, z: n.z ?? 0 }] as const),
+      ...diagram.shapes.map((sh) => [sh.id, { x: sh.x, y: sh.y, z: sh.z ?? 0 }] as const)
+    ])
+    const connectorEdges: Edge[] = (diagram.connectors ?? []).flatMap((c) => {
+      const a = itemPos.get(c.source)
+      const b = itemPos.get(c.target)
+      if (!a || !b) return []
+      const [sourceSide, targetSide] = facingSides(a, b)
+      const isSelected = selected.edges.has(c.id)
+      const color = isSelected ? SELECTED_STROKE : (c.color ?? '#64748b')
+      const arrow = { type: MarkerType.ArrowClosed, width: 16, height: 16, color }
+      return [
+        {
+          id: c.id,
+          source: c.source,
+          target: c.target,
+          sourceHandle: isAnchorId(c.sourceHandle) ? c.sourceHandle : centerAnchor(sourceSide),
+          targetHandle: isAnchorId(c.targetHandle) ? c.targetHandle : centerAnchor(targetSide),
+          label: c.label || undefined,
+          type: 'smoothstep',
+          // Acima das duas pontas (formas costumam ficar umas sobre as outras)
+          zIndex: Math.max(a.z, b.z) * 2 + 1,
+          style: { stroke: color, strokeWidth: isSelected ? 2 : 1.5, strokeDasharray: c.dashed ? '6 4' : undefined },
+          markerEnd: c.arrow === 'none' ? undefined : arrow,
+          markerStart: c.arrow === 'both' ? arrow : undefined,
+          selected: isSelected,
+          data: { connector: true },
+          labelBgPadding: [6, 3] as [number, number],
+          labelBgBorderRadius: 4
+        }
+      ]
+    })
+
+    const relationEdges = diagram.edges.flatMap((id) => {
       const rel = relations[id]
       const source = rel && nodeById.get(rel.sourceId)
       const target = rel && nodeById.get(rel.targetId)
@@ -236,6 +365,7 @@ export function Canvas(): JSX.Element {
         }
       ]
     })
+    return [...relationEdges, ...connectorEdges]
   }, [diagram, relations, selected, edgeZ, hiddenEdgeIds, resourceRects])
 
   /** Retângulos de todos os itens do desenho, com o tamanho medido na tela. */
@@ -302,15 +432,14 @@ export function Canvas(): JSX.Element {
     [moveItem, updateShape, resizeNode, shapeIds, getZoom, itemRects]
   )
 
-  const onConnect = useCallback(
-    (c: Connection) => {
-      // A direção é a do arrasto: de onde começou para onde soltou (ex.: Serve sai de quem serve)
-      const sourceId = c.source
-      const targetId = c.target
-      // Ponto de conexão usado em cada ponta
-      const anchors = {
-        source: isAnchorId(c.sourceHandle) ? c.sourceHandle : undefined,
-        target: isAnchorId(c.targetHandle) ? c.targetHandle : undefined
+  /** Liga duas pontas (recurso → relação; forma em alguma ponta → ligação só visual). */
+  const finishConnect = useCallback(
+    (sourceId: string, targetId: string, anchors: { source?: string; target?: string }) => {
+      if (sourceId === targetId) return
+      // Forma em alguma ponta: ligação só visual (fica no desenho, não vira relação)
+      if (shapeIds.has(sourceId) || shapeIds.has(targetId)) {
+        addConnector(sourceId, targetId, anchors)
+        return
       }
       connect(sourceId, targetId, anchors)
       const a = resourceRects.get(sourceId)
@@ -319,25 +448,54 @@ export function Canvas(): JSX.Element {
         notify('Ligação criada, mas fica oculta enquanto um recurso estiver dentro do outro.')
       }
     },
-    [connect, resources, resourceRects, notify]
+    [connect, addConnector, shapeIds, resourceRects, notify]
   )
 
-  // Arrastar a ponta de uma seta (ferramenta Ligar) troca o ponto de conexão no mesmo recurso
-  const onReconnect = useCallback(
-    (edge: Edge, c: Connection) => {
-      const rel = relations[edge.id]
-      if (!rel) return
-      const s = c.source
-      const t = c.target
-      const pick = (h: string | null | undefined): string | undefined => (isAnchorId(h) ? h : undefined)
-      if (s === rel.sourceId && t === rel.targetId) {
-        setEdgeAnchors(edge.id, { source: pick(c.sourceHandle), target: pick(c.targetHandle) })
-      } else if (s === rel.targetId && t === rel.sourceId) {
-        setEdgeAnchors(edge.id, { source: pick(c.targetHandle), target: pick(c.sourceHandle) })
-      }
-      // Soltar em outro recurso não muda a relação: isso se faz criando uma ligação nova
+  // Ao arrastar a ponta de uma seta, o React Flow também chama onConnectEnd: ignorado nesse caso
+  const reconnecting = useRef(false)
+
+  // A ligação termina onde o mouse soltou: num ponto fixo, ou no ponto da borda mais perto (borda ou meio
+  // do item). Por isso tudo é resolvido aqui, e não em onConnect (que só conhece os pontos fixos).
+  const onConnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent, state: FinalConnectionState) => {
+      const start = borderStart.current
+      borderStart.current = undefined
+      if (reconnecting.current || !state.fromNode || !state.fromHandle) return
+      const sourceId = state.fromNode.id
+      const target = dropTarget(event)
+      if (!target) return
+      // A direção é a do arrasto: de onde começou para onde soltou (ex.: Serve sai de quem serve)
+      const fromId = state.fromHandle.id
+      const source =
+        isBorderHandle(fromId) && start?.nodeId === sourceId ? start.anchor : isAnchorId(fromId) ? fromId : undefined
+      finishConnect(sourceId, target.nodeId, { source, target: target.anchor })
     },
-    [relations, setEdgeAnchors]
+    [finishConnect]
+  )
+
+  // Arrastar a ponta de uma seta (ferramenta Ligar) troca o ponto de conexão, em qualquer ponto da borda
+  const onReconnectEnd = useCallback(
+    (event: MouseEvent | TouchEvent, edge: Edge, fixedEnd: 'source' | 'target') => {
+      reconnecting.current = false
+      const target = dropTarget(event)
+      if (!target) return
+      const moved = fixedEnd === 'source' ? 'target' : 'source'
+      const current = useModel.getState()
+      const d = current.activeDiagram ? current.diagrams[current.activeDiagram] : undefined
+      if (edge.data?.connector) {
+        const c = d?.connectors?.find((x) => x.id === edge.id)
+        if (!c) return
+        const next = { source: c.source, target: c.target, sourceHandle: c.sourceHandle, targetHandle: c.targetHandle }
+        if (moved === 'source') Object.assign(next, { source: target.nodeId, sourceHandle: target.anchor })
+        else Object.assign(next, { target: target.nodeId, targetHandle: target.anchor })
+        if (next.source !== next.target) updateConnector(edge.id, next)
+        return
+      }
+      // Relação: só troca o ponto no mesmo recurso (outro recurso = criar uma ligação nova)
+      if (target.nodeId !== edge[moved]) return
+      setEdgeAnchors(edge.id, { ...d?.anchors?.[edge.id], [moved]: target.anchor })
+    },
+    [setEdgeAnchors, updateConnector]
   )
 
   // Delete/Backspace remove do desenho, mas mantém o arquivo em aplicações/ e relações/
@@ -409,9 +567,12 @@ export function Canvas(): JSX.Element {
       // Formas só existem no desenho: saem direto. Recursos e ligações: pergunta antes de excluir de vez
       const shapes = items.filter((id) => shapeIds.has(id))
       if (shapes.length) removeFromDiagram(shapes)
+      // Ligações visuais também só existem no desenho
+      const connectors = edges.filter((id) => !state.relations[id])
+      if (connectors.length) removeEdgesFromDiagram(connectors)
       const targets = [
         ...items.filter((id) => !shapeIds.has(id)).map((id) => ({ kind: 'resource' as const, id })),
-        ...edges.map((id) => ({ kind: 'relation' as const, id }))
+        ...edges.filter((id) => state.relations[id]).map((id) => ({ kind: 'relation' as const, id }))
       ]
       if (targets.length) askPermanentDelete(targets)
     }
@@ -550,15 +711,21 @@ export function Canvas(): JSX.Element {
         edges={edges}
         nodeTypes={nodeTypes}
         onNodesChange={onNodesChange}
-        onConnect={onConnect}
-        onReconnect={onReconnect}
+        onConnectEnd={onConnectEnd}
+        // Necessário para as pontas das setas serem arrastáveis; a troca é feita em onReconnectEnd
+        onReconnect={noop}
+        onReconnectStart={() => {
+          reconnecting.current = true
+        }}
+        onReconnectEnd={onReconnectEnd}
+        connectionLineComponent={BorderConnectionLine}
         edgesReconnectable={tool === 'connect'}
         nodesDraggable={tool === 'select'}
         onDelete={onDelete}
         onNodeClick={onNodeClick}
         onEdgesChange={onEdgesChange}
         onEdgeClick={(event, edge) => {
-          if (!event.shiftKey) select({ kind: 'relation', id: edge.id })
+          if (!event.shiftKey) select({ kind: edge.data?.connector ? 'connector' : 'relation', id: edge.id })
         }}
         onPaneClick={() => {
           select(null)
@@ -583,12 +750,13 @@ export function Canvas(): JSX.Element {
           event.preventDefault()
           const current = selectedIds(useModel.getState())
           const inGroup = current.items.length + current.edges.length > 1 && current.edges.includes(edge.id)
-          if (!inGroup) select({ kind: 'relation', id: edge.id })
+          const kind = edge.data?.connector ? 'connector' : 'relation'
+          if (!inGroup) select({ kind, id: edge.id })
           setMenu({
             x: event.clientX,
             y: event.clientY,
             id: edge.id,
-            kind: 'relation',
+            kind,
             items: inGroup ? current.items : [],
             edges: inGroup ? current.edges : [edge.id]
           })

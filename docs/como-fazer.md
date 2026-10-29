@@ -12,7 +12,9 @@
    `scripts/e2e/undo.cjs` (desfazer/refazer) e `scripts/e2e/delete.cjs` (exclusão do desenho × permanente,
    endpoint repetido pelas ligações, Schema) e `scripts/e2e/select.cjs` (seleção por retângulo, Shift+clique,
    mover em grupo, travar), `scripts/e2e/direction.cjs` (direção das ligações) e `scripts/e2e/template.cjs`
-   (feature a partir de pasta modelo) e `scripts/e2e/aliases.cjs` (pastas em português/inglês). Cada um termina com `Tudo certo` (código 0)
+   (feature a partir de pasta modelo), `scripts/e2e/aliases.cjs` (pastas em português/inglês) e
+   `scripts/e2e/connectors.cjs` (ligações visuais entre formas) e `scripts/e2e/border.cjs` (ligar em qualquer
+   ponto da borda) e `scripts/e2e/legend.cjs` (legenda de impacto). Cada um termina com `Tudo certo` (código 0)
    ou lista as falhas (código 1). O caminho temporário impresso no fim tem o repositório resultante e as
    capturas de tela.
 3. Para mudanças visuais, tire uma captura no teste (`await t.shot('nome.png')`) e confira a imagem.
@@ -36,6 +38,14 @@ controlado do React), `$blur(el)` (confirmar input inline; `el.blur()` não func
 `$save()`. `alert`/`confirm` são substituídos (confirm responde "sim") e registrados em
 `window.__dialogs`. Para arrastar alças, dispare `mousedown` no elemento e `mousemove`/`mouseup` em
 `window` (exemplo no passo "redimensionar recurso" de `smoke.cjs`).
+
+### Teclas no teste
+
+- O React Flow guarda "tecla pressionada" até o `keyup`: para apertar Delete duas vezes, envie `keydown`,
+  espere ~100 ms e envie `keyup` (veja `$pressDelete` em `connectors.cjs`). `keydown` e `keyup` no mesmo
+  instante não são percebidos.
+- Shift+clique: o React Flow lê o Shift pelo teclado; envie `keydown` de Shift antes do clique (veja
+  `select.cjs`).
 
 ## Adicionar um campo a recursos, tecnologias ou relações
 

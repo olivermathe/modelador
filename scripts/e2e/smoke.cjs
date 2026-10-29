@@ -16,6 +16,13 @@ run(async (t) => {
   const edges = await t.js(`document.querySelectorAll('.react-flow__edge').length`)
   t.assert(nodes === 6 && shapes === 2 && edges === 5, `desenho com 6 recursos, 2 formas, 5 ligações (${nodes}/${shapes}/${edges})`)
 
+  t.step('impacto só na cor da borda, sem rótulo')
+  const impact = JSON.parse(await t.js(`{
+    const node = [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes('pedido-criado'));
+    JSON.stringify({ text: node.textContent, border: node.querySelector('.border-2').className.includes('border-emerald-500') })
+  }`))
+  t.assert(impact.border && !/novo/i.test(impact.text.replace('pedido-criado', '')), `borda verde, sem "NOVO" (${impact.text})`)
+
   t.step('salvar sem alterações não regrava nada')
   t.markAllOld()
   await t.js(`$save()`)

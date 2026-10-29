@@ -9,7 +9,7 @@ import {
   SHAPE_KINDS
 } from '@/model/elementTypes'
 import { displayPath, endpointsOf, ownersOf, technologiesOf, useModel } from '@/model/store'
-import { REPO_FOLDERS, type Impact, type Relation, type Resource, type Shape, type Technology } from '@/model/types'
+import { REPO_FOLDERS, type Connector, type Impact, type Relation, type Resource, type Shape, type Technology } from '@/model/types'
 import { ACCESS_MODES, ARCHIMATE_TYPES, relationNotation } from '@/model/archimate'
 import { NotationPreview } from './ArchimateMarkers'
 import { ORDER_ACTIONS } from './ContextMenu'
@@ -128,6 +128,11 @@ export function PropertiesContent(): JSX.Element {
       ? s.diagrams[s.activeDiagram]?.shapes.find((sh) => sh.id === s.selection!.id)
       : undefined
   )
+  const connector = useModel((s) =>
+    s.selection?.kind === 'connector' && s.activeDiagram
+      ? s.diagrams[s.activeDiagram]?.connectors?.find((c) => c.id === s.selection!.id)
+      : undefined
+  )
   const multiCount = useModel((s) => s.selectedItems.length + s.selectedEdges.length)
   if (multiCount > 1) return <MultiProperties />
 
@@ -145,6 +150,8 @@ export function PropertiesContent(): JSX.Element {
         <RelationProperties relation={relation} />
       ) : shape ? (
         <ShapeProperties shape={shape} />
+      ) : connector ? (
+        <ConnectorProperties connector={connector} />
       ) : (
         <div className="p-6 text-center text-sm text-slate-400">
           {selection ? 'Item não encontrado.' : 'Selecione um recurso, forma, tecnologia ou relação para editar.'}
@@ -835,6 +842,62 @@ function RelationTypeField({ relation }: { relation: Relation }): JSX.Element {
           Com direção
         </label>
       )}
+    </div>
+  )
+}
+
+/** Ligação só visual (forma ↔ forma/recurso): existe só neste desenho, sem semântica de arquitetura. */
+function ConnectorProperties({ connector }: { connector: Connector }): JSX.Element {
+  const { updateConnector, reverseConnector, removeEdgesFromDiagram } = useModel.getState()
+  const update = (patch: Partial<Connector>): void => updateConnector(connector.id, patch)
+  const toggle = (active: boolean): string =>
+    `rounded-md border py-1 text-xs ${active ? 'border-sky-400 bg-sky-50 text-sky-800' : 'border-slate-200 text-slate-600 hover:bg-slate-50'}`
+  const arrow = connector.arrow ?? 'end'
+
+  return (
+    <div className="space-y-4 p-4">
+      <Header title="Ligação visual">
+        <p className="mt-1 text-xs text-slate-400">
+          Só ilustra o desenho: não é uma relação de arquitetura e não vai para a pasta de relações.
+        </p>
+      </Header>
+      <Field label="Rótulo">
+        <input className={inputClass} value={connector.label ?? ''} onChange={(e) => update({ label: e.target.value })} />
+      </Field>
+      <div>
+        <span className="mb-1 block text-xs font-medium text-slate-500">Seta</span>
+        <div className="grid grid-cols-3 gap-1">
+          {([
+            ['end', 'No fim'],
+            ['both', 'Nos dois lados'],
+            ['none', 'Sem seta']
+          ] as const).map(([value, label]) => (
+            <button key={value} onClick={() => update({ arrow: value })} className={toggle(arrow === value)}>
+              {label}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-1">
+        <button onClick={() => update({ dashed: false })} className={toggle(!connector.dashed)}>
+          Contínua
+        </button>
+        <button onClick={() => update({ dashed: true })} className={toggle(!!connector.dashed)}>
+          Tracejada
+        </button>
+      </div>
+      <ColorPicker label="Cor" value={connector.color ?? '#64748b'} onChange={(color) => update({ color: color === '#64748b' ? undefined : color })} />
+      <div className="space-y-2 border-t border-slate-100 pt-4">
+        <button
+          onClick={() => reverseConnector(connector.id)}
+          className="flex w-full items-center justify-center gap-1.5 rounded-md border border-slate-200 px-3 py-1.5 text-sm text-slate-700 hover:bg-slate-50"
+        >
+          <ArrowLeftRight className="h-3.5 w-3.5" /> Inverter direção
+        </button>
+        <button onClick={() => removeEdgesFromDiagram([connector.id])} className={dangerButton}>
+          <Trash2 className="h-3.5 w-3.5" /> Excluir ligação
+        </button>
+      </div>
     </div>
   )
 }

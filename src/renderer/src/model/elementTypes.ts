@@ -1,4 +1,4 @@
-import { Boxes, Braces, Circle, Database, RectangleHorizontal, Server, Square, Type, Waypoints, Webhook, type LucideIcon } from 'lucide-react'
+import { Boxes, Braces, Circle, Database, ListChecks, RectangleHorizontal, Server, Square, Type, Waypoints, Webhook, type LucideIcon } from 'lucide-react'
 import type { ElementType, Impact, ShapeKind } from './types'
 
 export interface ElementTypeInfo {
@@ -71,10 +71,11 @@ export const SHAPE_KINDS: Record<ShapeKind, ShapeKindInfo> = {
   rectangle: { label: 'Retângulo', icon: RectangleHorizontal, width: 200, height: 110 },
   rounded: { label: 'Quadrado', icon: Square, width: 140, height: 140 },
   ellipse: { label: 'Elipse', icon: Circle, width: 160, height: 100 },
-  text: { label: 'Texto', icon: Type, width: 180, height: 40 }
+  text: { label: 'Texto', icon: Type, width: 180, height: 40 },
+  legend: { label: 'Legenda de impacto', icon: ListChecks, width: 190, height: 130 }
 }
 
-export const SHAPE_KIND_ORDER: ShapeKind[] = ['rectangle', 'rounded', 'ellipse', 'text']
+export const SHAPE_KIND_ORDER: ShapeKind[] = ['rectangle', 'rounded', 'ellipse', 'text', 'legend']
 
 /** Paleta de cores para formas (parecida com a do draw.io). */
 export const SHAPE_COLORS = [

@@ -82,6 +82,7 @@ O repositório costuma estar no Git; regravar arquivos sem mudança polui o hist
 - Não reintroduza cor por tipo, por método HTTP ou nos conectores. O tipo se distingue pelo ícone e pelo
   rótulo. (As etiquetas de tecnologia em roxo são a única exceção hoje.)
 - Seleção usa azul (`sky`), que não é cor de impacto.
+- Impacto aparece **só como cor da borda** do recurso (e da seta), sem rótulo escrito ("NOVO" etc.).
 
 ## 8. Recurso redimensionado não esconde texto
 

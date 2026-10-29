@@ -5,6 +5,7 @@ import { ELEMENT_TYPES, SHAPE_KINDS } from './elementTypes'
 import { endpointName, isInside, parseScan, slugify, type DiskSnapshot, type RepoContent } from './repo'
 import type {
   ArchimateRelType,
+  Connector,
   EdgeAnchors,
   HttpMethod,
   Diagram,
@@ -138,6 +139,10 @@ interface ModelState extends RepoContent {
   ) => void
   /** Troca origem e destino de uma ligação (e os pontos de conexão dela nos desenhos). */
   reverseRelation: (id: string) => void
+  /** Ligação só visual no desenho aberto (forma ↔ forma/recurso). */
+  addConnector: (source: string, target: string, anchors?: EdgeAnchors) => string
+  updateConnector: (id: string, patch: Partial<Omit<Connector, 'id'>>) => void
+  reverseConnector: (id: string) => void
   /** Traz uma ligação existente para o desenho aberto e a seleciona. */
   showRelation: (id: string) => void
   /** Ponto de conexão de uma seta neste desenho. */
@@ -777,9 +782,63 @@ export const useModel = create<ModelState>((set, get) => ({
 
   removeEdgesFromDiagram: (relationIds) =>
     set((s) => ({
-      ...updateActive(s, (d) => ({ ...d, edges: d.edges.filter((id) => !relationIds.includes(id)) })),
+      // Também serve para as ligações visuais (connectors), que só existem no desenho
+      ...updateActive(s, (d) => ({
+        ...d,
+        edges: d.edges.filter((id) => !relationIds.includes(id)),
+        ...(d.connectors ? { connectors: d.connectors.filter((c) => !relationIds.includes(c.id)) } : {})
+      })),
       selection: null
     })),
+
+  addConnector: (source, target, anchors) => {
+    const connector: Connector = {
+      id: uid(),
+      source,
+      target,
+      ...(anchors?.source ? { sourceHandle: anchors.source } : {}),
+      ...(anchors?.target ? { targetHandle: anchors.target } : {})
+    }
+    set((s) => ({
+      ...updateActive(s, (d) => ({ ...d, connectors: [...(d.connectors ?? []), connector] })),
+      selection: { kind: 'connector', id: connector.id }
+    }))
+    return connector.id
+  },
+
+  updateConnector: (id, patch) =>
+    set((s) =>
+      updateActive(s, (d) => ({
+        ...d,
+        connectors: (d.connectors ?? []).map((c) => {
+          if (c.id !== id) return c
+          const next: Connector = { ...c, ...patch }
+          // Valores padrão saem do arquivo
+          for (const key of ['label', 'arrow', 'dashed', 'color', 'sourceHandle', 'targetHandle'] as const) {
+            if (key in patch && (!patch[key] || (key === 'arrow' && patch.arrow === 'end'))) delete next[key]
+          }
+          return next
+        })
+      }))
+    ),
+
+  reverseConnector: (id) =>
+    set((s) =>
+      updateActive(s, (d) => ({
+        ...d,
+        connectors: (d.connectors ?? []).map((c) => {
+          if (c.id !== id) return c
+          const { sourceHandle, targetHandle, ...rest } = c
+          return {
+            ...rest,
+            source: c.target,
+            target: c.source,
+            ...(targetHandle ? { sourceHandle: targetHandle } : {}),
+            ...(sourceHandle ? { targetHandle: sourceHandle } : {})
+          }
+        })
+      }))
+    ),
 
   addShape: (kind, position) =>
     set((s) => {
@@ -791,9 +850,9 @@ export const useModel = create<ModelState>((set, get) => ({
         y: position.y - info.height / 2,
         width: info.width,
         height: info.height,
-        text: kind === 'text' ? 'Texto' : '',
+        text: kind === 'text' ? 'Texto' : kind === 'legend' ? 'Legenda' : '',
         fill: kind === 'text' ? 'transparent' : '#ffffff',
-        stroke: '#334155',
+        stroke: kind === 'legend' ? '#cbd5e1' : '#334155',
         strokeStyle: kind === 'text' ? 'none' : 'solid',
         textColor: '#0f172a',
         fontSize: kind === 'text' ? 16 : 14
@@ -851,7 +910,9 @@ export const useModel = create<ModelState>((set, get) => ({
           const r = s.relations[id]
           return r && present.has(r.sourceId) && present.has(r.targetId)
         })
-        return { ...d, nodes, edges, shapes: d.shapes.filter((sh) => !ids.includes(sh.id)) }
+        // Ligações visuais presas a um item removido saem junto
+        const connectors = d.connectors?.filter((c) => !ids.includes(c.source) && !ids.includes(c.target))
+        return { ...d, nodes, edges, shapes: d.shapes.filter((sh) => !ids.includes(sh.id)), ...(d.connectors ? { connectors } : {}) }
       }),
       selection: null
     })),
@@ -899,7 +960,7 @@ export const useModel = create<ModelState>((set, get) => ({
       if (items.length + edges.length > 1) return { selection: null, selectedItems: items, selectedEdges: edges }
       const d = s.activeDiagram ? s.diagrams[s.activeDiagram] : undefined
       const selection: Selection = edges[0]
-        ? { kind: 'relation', id: edges[0] }
+        ? { kind: d?.connectors?.some((c) => c.id === edges[0]) ? 'connector' : 'relation', id: edges[0] }
         : items[0]
           ? { kind: d?.shapes.some((sh) => sh.id === items[0]) ? 'shape' : 'resource', id: items[0] }
           : null
@@ -936,7 +997,7 @@ export function selectedIds(s: Pick<ModelState, 'selection' | 'selectedItems' | 
 } {
   if (s.selectedItems.length + s.selectedEdges.length > 1) return { items: s.selectedItems, edges: s.selectedEdges }
   const sel = s.selection
-  if (sel?.kind === 'relation') return { items: [], edges: [sel.id] }
+  if (sel?.kind === 'relation' || sel?.kind === 'connector') return { items: [], edges: [sel.id] }
   if (sel?.kind === 'resource' || sel?.kind === 'shape') return { items: [sel.id], edges: [] }
   return { items: [], edges: [] }
 }

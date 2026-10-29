@@ -20,6 +20,7 @@ Caminhos relativos a `src/renderer/src/` (exceto onde indicado).
 | Recursos no desenho (tipo, impacto, tecnologias; endpoints com nó próprio) | `components/ElementNode.tsx` |
 | Redimensionar recurso (mínimo = conteúdo) | `ElementNode.tsx` (`NodeResizer`, `fitHeightAfterResize`); store `resizeNode`; `Canvas.tsx` `onNodesChange` |
 | Formas (retângulo, quadrado, elipse, texto), cores, texto editável | `components/ShapeNode.tsx`; `PropertiesPanel.tsx` `ShapeProperties`; `model/elementTypes.ts` `SHAPE_KINDS`, `SHAPE_COLORS` |
+| Legenda das cores de impacto | Forma `legend`: `ShapeNode.tsx` (`ImpactLegend`, cores de `IMPACTS`); `elementTypes.ts` `SHAPE_KINDS`; store `addShape`; `repo.ts` `parseShape` |
 | Ordem de empilhamento (frente/trás) | store `reorder`; `components/ContextMenu.tsx` (`ORDER_ACTIONS`); atalhos em `Canvas.tsx` |
 | Menu de contexto (botão direito) | `components/ContextMenu.tsx` |
 | Guias de alinhamento e encaixe | `model/alignment.ts` `snapToGuides`; `Canvas.tsx` (`itemRects`, `AlignmentGuides`) |
@@ -31,6 +32,7 @@ Caminhos relativos a `src/renderer/src/` (exceto onde indicado).
 | Ligações carregadas ao incluir recurso no desenho | store `placeResource`/`createEndpoint` → `withImpliedEdges` |
 | Seleção múltipla (retângulo, Shift+clique) | store `selectedItems`, `selectedEdges`, `setMultiSelection`, `selectedIds`; `Canvas.tsx` (`onNodesChange`/`onEdgesChange` com mudanças `select`, `selectionOnDrag`); `PropertiesPanel.tsx` `MultiProperties`; menu de contexto em grupo |
 | Travar recurso/forma no desenho | store `setLocked`; `locked` em `DiagramNode`/`Shape`; `Canvas.tsx` (nó sem arrasto/seleção, `pointerEvents: none`); `components/LockBadge.tsx`; `PropertiesPanel.tsx` `LockToggle`; `ContextMenu.tsx`; botão direito em item travado: `Canvas.tsx` `lockedItemAt` |
+| Ligações visuais entre formas | `Connector` em `model/types.ts`; store `addConnector`, `updateConnector`, `reverseConnector`, `removeEdgesFromDiagram`; `Canvas.tsx` (`onConnect` com forma em alguma ponta, `connectorEdges`); pontos de conexão em `ShapeNode.tsx`; `PropertiesPanel.tsx` `ConnectorProperties`; `ContextMenu.tsx` (`kind: 'connector'`) |
 | Pergunta "usar o existente / criar novo" | `components/ChoiceDialog.tsx`; store `choice`, `ask` |
 | Exclusão do desenho × permanente | `components/deleteActions.ts` (`askPermanentDelete`); Shift+Delete em `Canvas.tsx`; `ContextMenu.tsx`; botões em `PropertiesPanel.tsx` |
 | Ligação já existente (pergunta) | store `relationBetween`, `connect` (abre `choice`), `showRelation` |
@@ -40,6 +42,7 @@ Caminhos relativos a `src/renderer/src/` (exceto onde indicado).
 | Endpoints como recursos (dono = ligação de Composição) | store `createEndpoint`, `endpointsOf`, `ownersOf`; `PropertiesPanel.tsx` `EndpointList`, `EndpointProperties` |
 | Endpoint repetido (pelas ligações) | store `linkedEndpointWithRoute`, `routeConflict`, `endpointRoute`; `EndpointRouteEditor.tsx` (`commitEndpointRoute`, `NewEndpointForm`); `connect` |
 | Ferramenta Selecionar/Ligar e pontos de conexão | store `tool`, `setTool`, `setEdgeAnchors`; `components/ToolSwitch.tsx`; `dnd.ts` `ANCHOR_POINTS`, `centerAnchor`; `ElementNode.tsx`; `Canvas.tsx` (`onConnect`, `onReconnect`, `edges`); CSS `.anchor-point` em `index.css` |
+| Ligar em qualquer ponto da borda (pontos livres) | `components/AnchorHandles.tsx` (faixas da borda, `borderStart`); `dnd.ts` (`anchorAt`, `parseAnchor`, `freeAnchorId`, `BORDER_HANDLES`); `Canvas.tsx` (`onConnectEnd`, `onReconnectEnd`, `dropTarget`, `BorderConnectionLine`, `anchors` nos dados do nó); CSS `.anchor-border` |
 | Nova feature a partir de pasta modelo | `FeatureDialog.tsx` (escolha e prévia); main `template:pick`, `template:read`; store `createFeatureFromTemplate`, `pendingFiles`, `templateOriginals`; `fileActions.ts` `saveRepo` (grava base64 e originais) |
 | Nova feature (pasta com diagrama, processo e documento) | `components/FeatureDialog.tsx`; store `createFeature`, `openFeatureDialog`; botões em `Toolbar.tsx` e `RepoPanel.tsx` |
 | Editor Markdown com pré-visualização | `components/MarkdownEditor.tsx` (`marked` + `DOMPurify`, links abrem fora) |
