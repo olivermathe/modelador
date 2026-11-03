@@ -4,8 +4,7 @@
 const { run } = require('./harness.cjs')
 
 run(async (t) => {
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
   await t.js(`
     window.$node = (text) => [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes(text));
     window.$pos = (text) => { const r = $node(text).getBoundingClientRect(); return [Math.round(r.x), Math.round(r.y)] };

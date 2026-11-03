@@ -9,8 +9,7 @@ run(async (t) => {
   t.step('abre o exemplo')
   const roots = await t.js(`[...document.querySelectorAll('aside span.font-medium')].map((s) => s.textContent).join()`)
   t.assert(roots === 'projetos,aplicações,tecnologias,relações', `pastas raiz na árvore: ${roots}`)
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
   const nodes = await t.js(`document.querySelectorAll('.react-flow__node-element').length`)
   const shapes = await t.js(`document.querySelectorAll('.react-flow__node-shape').length`)
   const edges = await t.js(`document.querySelectorAll('.react-flow__edge').length`)
@@ -37,7 +36,7 @@ run(async (t) => {
 
   t.step('editar não toca o disco antes do Salvar')
   await t.js(`$row('portal-do-cliente').click()`)
-  await t.wait(300)
+  await t.until(`[...document.querySelectorAll('input')].some((i) => i.value === 'Portal do Cliente')`)
   await t.js(`$type([...document.querySelectorAll('input')].find((i) => i.value === 'Portal do Cliente'), 'Portal Web')`)
   // Ações da pasta ficam no menu ⋯
   await t.js(`document.querySelector('[aria-label="Ações da pasta projetos"]').click()`)
@@ -67,7 +66,7 @@ run(async (t) => {
   t.step('redimensionar recurso respeita o conteúdo')
   await t.js(`window.$api = () => [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes('API de Pedidos')); 0`)
   await t.js(`$api().click()`)
-  await t.wait(300)
+  await t.until(`$api().querySelector('.react-flow__resize-control.handle.bottom.right')`)
   // Arrasta a alça do canto inferior direito bem além do mínimo
   await t.js(`{
     const h = $api().querySelector('.react-flow__resize-control.handle.bottom.right');
@@ -77,7 +76,8 @@ run(async (t) => {
     for (let i = 1; i <= 10; i++) ev('mousemove', x - 60 * i, y - 60 * i, window);
     ev('mouseup', x - 600, y - 600, window);
   }`)
-  await t.wait(500)
+  // A altura se ajusta ao conteúdo logo depois de soltar a alça
+  await t.until(`$api().offsetWidth === 160 && $api().offsetHeight === $api().querySelector('.border-2').offsetHeight`)
   const size = JSON.parse(await t.js(`{
     // offsetWidth/Height: tamanho no desenho, sem o zoom da tela
     const node = $api(), box = node.querySelector('.border-2');
@@ -87,10 +87,9 @@ run(async (t) => {
   t.assert(size.h === size.boxH, `moldura acompanha o conteúdo (${size.h}px / ${size.boxH}px)`)
 
   t.step('exportar JPEG')
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(500)
+  await t.openDiagram('Visão geral')
   await t.js(`document.querySelector('[title^="Exportar o desenho"]').click()`)
-  await t.wait(2500)
+  for (let i = 0; i < 100 && !require('fs').existsSync(require('path').join(t.shots, 'export.jpg')); i++) await t.wait(100)
   t.assert(require('fs').existsSync(require('path').join(t.shots, 'export.jpg')), 'imagem exportada')
 
   const dialogs = await t.js(`JSON.stringify(window.__dialogs)`)

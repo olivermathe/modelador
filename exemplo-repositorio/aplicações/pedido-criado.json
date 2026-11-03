@@ -3,6 +3,5 @@
   "type": "queue",
   "name": "pedido-criado",
   "description": "Evento publicado quando um pedido é criado.",
-  "owner": "Time Pedidos",
-  "impact": "new"
+  "owner": "Time Pedidos"
 }

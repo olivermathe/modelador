@@ -4,7 +4,6 @@
   "name": "GET /pedidos/{id}",
   "description": "Consulta um pedido",
   "owner": "Time Pedidos",
-  "impact": "changed",
   "method": "GET",
   "path": "/pedidos/{id}"
 }

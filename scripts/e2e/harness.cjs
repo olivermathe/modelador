@@ -90,6 +90,31 @@ module.exports.run = (test) => {
       shots: SHOTS,
       js,
       wait,
+      /**
+       * Espera a expressão JS ficar verdadeira (até `ms`). Use no lugar de esperas fixas: com a máquina
+       * ocupada (ex.: logo depois do build), a interface demora mais para reagir.
+       */
+      until: async (code, ms = 5000) => {
+        const end = Date.now() + ms
+        while (Date.now() < end) {
+          if (await js(`!!(${code})`).catch(() => false)) return true
+          await wait(100)
+        }
+        return false
+      },
+      /** Abre um desenho pela árvore e espera os itens e as setas aparecerem (setas param de mudar). */
+      openDiagram: async (name) => {
+        await t.until(`$row(${JSON.stringify(name)})`)
+        await js(`$row(${JSON.stringify(name)}).click()`)
+        await t.until(`document.querySelector('.react-flow__node')`)
+        let last = -1
+        for (let i = 0; i < 30; i++) {
+          const n = await js(`document.querySelectorAll('.react-flow__edge').length`)
+          if (n === last) break
+          last = n
+          await wait(300)
+        }
+      },
       step: (label) => console.log(`> ${label}`),
       assert: (ok, message) => {
         console.log(`  ${ok ? 'ok ' : 'FALHOU'} ${message}`)

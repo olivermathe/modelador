@@ -5,8 +5,7 @@
 const { run } = require('./harness.cjs')
 
 run(async (t) => {
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
   await t.js(`
     window.$node = (text) => [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes(text));
     window.$dbl = (el) => el.dispatchEvent(new MouseEvent('dblclick', { bubbles: true, cancelable: true }));

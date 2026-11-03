@@ -115,8 +115,7 @@ for (const { rel, data } of jsonFiles(folders.resources).map(load)) {
   for (const f of ['name', 'description', 'owner']) {
     if (typeof data[f] !== 'string') err(rel, `"${f}" precisa ser texto (pode ser "")`)
   }
-  if ('impact' in data && data.impact && !IMPACTS.includes(data.impact)) err(rel, `impact inválido "${data.impact}"`)
-  emptyOptional(rel, data, ['impact'])
+  if ('impact' in data) warn(rel, 'impact no recurso é formato antigo: o impacto vai no desenho (nodes[].impact)')
   if (data.type === 'endpoint') {
     if (!METHODS.includes(data.method)) err(rel, `method inválido "${data.method}"`)
     if (typeof data.path !== 'string' || !data.path.startsWith('/')) err(rel, 'path precisa começar com "/"')
@@ -169,8 +168,8 @@ for (const { rel, data } of jsonFiles(folders.relations).map(load)) {
     if ('directed' in data && data.directed === true && data.relType !== 'association') warn(rel, 'directed só vale com relType "association"')
   }
   if (data.sourceId === data.targetId) err(rel, 'origem e destino iguais')
-  if ('impact' in data && data.impact && !IMPACTS.includes(data.impact)) err(rel, `impact inválido "${data.impact}"`)
-  emptyOptional(rel, data, ['impact', 'relType', 'accessMode', 'strength', 'directed'])
+  if ('impact' in data) warn(rel, 'impact na ligação é formato antigo: o impacto vai no desenho (edgeImpacts)')
+  emptyOptional(rel, data, ['relType', 'accessMode', 'strength', 'directed'])
   relations.set(data.id, { ...data, rel })
 }
 
@@ -240,6 +239,20 @@ for (const { rel, data } of jsonFiles(folders.projects).map(load)) {
     if (present.has(n?.resourceId)) err(rel, `recurso ${n?.resourceId} aparece duas vezes em nodes`)
     present.add(n?.resourceId)
     if (!Number.isInteger(n?.x) || !Number.isInteger(n?.y)) warn(rel, `nó ${n?.resourceId}: x/y devem ser inteiros`)
+    if (n && 'impact' in n && !IMPACTS.includes(n.impact)) {
+      if (n.impact === null || n.impact === '') warn(rel, `nó ${n.resourceId}: impact vazio, omita a chave`)
+      else err(rel, `nó ${n.resourceId}: impact inválido "${n.impact}"`)
+    }
+  }
+  if ('edgeImpacts' in data) {
+    if (!isObject(data.edgeImpacts)) err(rel, 'edgeImpacts precisa ser um objeto { "<id da ligação>": impacto }')
+    else {
+      if (!Object.keys(data.edgeImpacts).length) warn(rel, 'edgeImpacts vazio: omita a chave')
+      for (const [id, impact] of Object.entries(data.edgeImpacts)) {
+        if (!IMPACTS.includes(impact)) err(rel, `edgeImpacts[${id}]: impacto inválido "${impact}"`)
+        if (!(Array.isArray(data.edges) && data.edges.includes(id))) warn(rel, `edgeImpacts[${id}]: ligação fora de edges (o app descarta)`)
+      }
+    }
   }
   for (const e of Array.isArray(data.edges) ? data.edges : []) {
     const r = relations.get(e)

@@ -24,7 +24,7 @@ O repositório costuma estar no Git; regravar arquivos sem mudança polui o hist
 
 - `diffRepo()` (`model/repo.ts`) compara o JSON **por conteúdo** (`sameJson`, ignora ordem de chaves e
   indentação) com o que foi lido. Arquivos editados à mão não são reformatados.
-- **Campos opcionais ausentes não são gravados.** `impact`, `relType`, `accessMode`, `strength`,
+- **Campos opcionais ausentes não são gravados.** `impact` (no nó do desenho), `edgeImpacts`, `relType`, `accessMode`, `strength`,
   `directed`, `z`, `width`/`height`, `shapes` (vazio) e similares só aparecem no arquivo quando têm valor.
   Ao limpar um desses campos, apague a chave (veja `updateRelation`/`updateResource` no store).
   Assim, abrir e salvar um repositório antigo não muda nada.
@@ -83,6 +83,9 @@ O repositório costuma estar no Git; regravar arquivos sem mudança polui o hist
   rótulo. (As etiquetas de tecnologia em roxo são a única exceção hoje.)
 - Seleção usa azul (`sky`), que não é cor de impacto.
 - Impacto aparece **só como cor da borda** do recurso (e da seta), sem rótulo escrito ("NOVO" etc.).
+- **Impacto é do desenho (feature), não do recurso nem da relação.** Fica em `nodes[].impact` e
+  `edgeImpacts` do desenho. Levar um recurso para outro desenho **não leva o impacto**; marcar num desenho
+  não muda os outros. Não volte a gravar `impact` em `aplicações/` ou `relações/`.
 
 ## 8. Recurso redimensionado não esconde texto
 

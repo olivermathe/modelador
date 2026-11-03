@@ -5,8 +5,7 @@
 const { run } = require('./harness.cjs')
 
 run(async (t) => {
-  await t.js(`$row('Persistência').click()`)
-  await t.wait(800)
+  await t.openDiagram('Persistência')
   await t.js(`
     window.$shapes = () => [...document.querySelectorAll('.react-flow__node-shape')];
     window.$node = (text) => [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes(text));

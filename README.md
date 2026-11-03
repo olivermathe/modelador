@@ -59,6 +59,12 @@ arquivos próprios).
   mesmo nome (sem diferenciar maiúsculas, acentos e pontuação). Se achar, pergunta: **Usar este** troca o recurso
   pelo existente em tudo (desenhos, ligações, tecnologias e endpoints) e apaga o duplicado ao salvar; **Criar novo
   mesmo** / **Manter os dois** mantém os dois; **Voltar ao nome anterior** (ou Esc) desfaz o nome.
+- **Aba Relacionamentos**: com um recurso selecionado, o painel da direita ganha a aba **Relacionamentos**
+  (com a contagem). Ela lista todos os recursos ligados a ele, com o tipo e a direção da ligação; os que já
+  estão no desenho aparecem esmaecidos, com ✓. Arraste um item para o desenho para incluí-lo: a seta aparece
+  sozinha e a seleção continua no recurso, para você trazer vários seguidos. No topo, um **filtro** por texto
+  (nome, tipo do recurso, tipo ou rótulo da ligação; sem diferenciar acentos, Esc limpa) e a opção **Só os que
+  não estão no desenho**, com a contagem "X de Y".
 - **Recurso existente**: arraste o arquivo de `aplicações/` para o desenho. As setas que ele já tem com
   recursos do desenho aparecem sozinhas.
 - **Tecnologia**: arraste o arquivo de `tecnologias/` sobre um recurso no desenho, ou ligue pelo painel de
@@ -89,9 +95,12 @@ arquivos próprios).
 - **Ligações automáticas e repetidas**: ao incluir um recurso existente no desenho, as ligações dele com os
   recursos que já estão lá aparecem sozinhas. Ligar dois recursos que já têm uma ligação entre si abre a
   pergunta: usar a existente ou criar uma nova, mantendo as duas.
-- **Impacto**: recursos, endpoints e relações têm Sem alteração / Novo / Alterado / Excluído. É a única cor do
-  desenho, só na borda (sem rótulo escrito): sem impacto, cinza neutro; Novo verde, Alterado laranja e Excluído
-  vermelho tracejado.
+- **Impacto**: Sem alteração / Novo / Alterado / Excluído, marcado **em cada desenho** (a feature): o mesmo
+  recurso pode ser Novo num desenho e sem alteração em outro, e levá-lo para outro desenho não leva a cor.
+  Marque no painel do recurso ou da ligação com o desenho aberto (ou para vários selecionados de uma vez). É a
+  única cor do desenho, só na borda (sem rótulo escrito): sem impacto, cinza neutro; Novo verde, Alterado
+  laranja e Excluído vermelho tracejado. Repositórios antigos, com o impacto no arquivo do recurso, passam o
+  impacto para os desenhos onde o item aparece ao salvar.
 - **Tecnologias**: no painel do recurso, "+ Tecnologias" abre uma lista com busca para marcar várias; digite
   nomes separados por vírgula para criar e ligar de uma vez.
 - **Ligações entre formas**: com a ferramenta Ligar, arraste de uma forma para outra forma (ou para um recurso).

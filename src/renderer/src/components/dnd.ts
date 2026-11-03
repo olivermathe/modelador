@@ -4,7 +4,8 @@ import type { ElementType, ShapeKind } from '@/model/types'
 export type DragPayload =
   | { kind: 'new'; type: ElementType }
   | { kind: 'shape'; shape: ShapeKind }
-  | { kind: 'resource'; id: string }
+  /** `keepSelection`: não seleciona o recurso solto (ex.: vindo da aba Relacionamentos). */
+  | { kind: 'resource'; id: string; keepSelection?: boolean }
   | { kind: 'technology'; id: string }
 
 export const DND_MIME = 'application/x-modelador'

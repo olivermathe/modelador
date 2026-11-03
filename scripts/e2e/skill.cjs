@@ -31,10 +31,10 @@ const validar = () => {
 run(async (t) => {
   t.step('escreve o exemplo da skill direto nos arquivos (sem a interface)')
   write('aplicações/notificacoes.json', {
-    id: ID.servico, type: 'service', name: 'Notificações', description: 'Envia notificações.', owner: 'Time Pedidos', impact: 'new'
+    id: ID.servico, type: 'service', name: 'Notificações', description: 'Envia notificações.', owner: 'Time Pedidos'
   })
   write('aplicações/notificacoes--post-notificacoes.json', {
-    id: ID.endpoint, type: 'endpoint', name: 'POST /notificacoes', description: '', owner: 'Time Pedidos', impact: 'new',
+    id: ID.endpoint, type: 'endpoint', name: 'POST /notificacoes', description: '', owner: 'Time Pedidos',
     method: 'POST', path: '/notificacoes'
   })
   write('relações/notificacoes--post-notificacoes.json', {
@@ -42,7 +42,7 @@ run(async (t) => {
   })
   write('relações/pedido-criado--notificacoes.json', {
     id: ID.evento, kind: 'flow', sourceId: PEDIDO_CRIADO, targetId: ID.servico, label: 'Consome', protocol: 'Kafka',
-    relType: 'flow', impact: 'new'
+    relType: 'flow'
   })
   write('relações/notificacoes--usa--node-js.json', {
     id: ID.usa, kind: 'uses', sourceId: ID.servico, targetId: NODE_JS, label: '', protocol: ''
@@ -50,8 +50,10 @@ run(async (t) => {
   // Seção 8: colocar no desenho
   const visaoPath = 'projetos/pedidos/Visão geral.json'
   const visao = JSON.parse(readFileSync(path.join(REPO, visaoPath), 'utf-8'))
-  visao.nodes.push({ resourceId: ID.servico, x: 900, y: 600 }, { resourceId: ID.endpoint, x: 900, y: 750 })
+  // Impacto da feature: no desenho, não nos arquivos do recurso/ligação
+  visao.nodes.push({ resourceId: ID.servico, x: 900, y: 600, impact: 'new' }, { resourceId: ID.endpoint, x: 900, y: 750, impact: 'new' })
   visao.edges.push(ID.dono, ID.evento)
+  visao.edgeImpacts = { ...visao.edgeImpacts, [ID.evento]: 'new' }
   write(visaoPath, visao)
 
   t.step('validador da skill: sem erros nem avisos')
@@ -61,8 +63,7 @@ run(async (t) => {
   t.step('o app lê os arquivos')
   t.menu('reload')
   await t.wait(800)
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
   const node = await t.js(`!![...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes('Notificações') && n.textContent.includes('Node.js'))`)
   t.assert(node, 'Notificações no desenho, com a etiqueta Node.js')
   const endpoint = await t.js(`!![...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes('/notificacoes') && n.textContent.includes('de Notificações'))`)
@@ -79,8 +80,8 @@ run(async (t) => {
   t.assert(t.files().join('\n') === before, 'nenhum arquivo renomeado')
 
   t.step('validador acusa erros e avisos')
-  write('relações/quebrada.json', { id: 'b1c2d3e4-0000-4000-8000-00000000a099', kind: 'flow', sourceId: ID.servico, targetId: 'nao-existe', label: '', protocol: '', impact: null })
+  write('relações/quebrada.json', { id: 'b1c2d3e4-0000-4000-8000-00000000a099', kind: 'flow', sourceId: ID.servico, targetId: 'nao-existe', label: '', protocol: '', relType: '' })
   const bad = validar()
   t.assert(bad.code === 1 && /targetId nao-existe não é um recurso/.test(bad.out), 'referência quebrada é erro')
-  t.assert(/impact" vazio/.test(bad.out) && /o app renomearia/.test(bad.out), 'campo vazio e nome de arquivo são avisos')
+  t.assert(/relType" vazio/.test(bad.out) && /o app renomearia/.test(bad.out), 'campo vazio e nome de arquivo são avisos')
 })

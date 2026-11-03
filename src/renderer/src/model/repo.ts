@@ -124,6 +124,8 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
   const files: Record<string, string> = {}
   /** Formato antigo: dono do endpoint num campo (`parentId`); vira ligação de Composição. */
   const legacyOwners: { endpointId: string; ownerId: string }[] = []
+  /** Formato antigo: impacto no recurso/relação (id → impacto); passa para os desenhos. */
+  const legacyImpacts: Record<string, Impact> = {}
 
   for (const file of scan.files) {
     let data: unknown
@@ -145,8 +147,9 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
         description: String(data.description ?? ''),
         owner: String(data.owner ?? '')
       }
+      // Formato antigo: impacto no recurso; vai para os desenhos onde ele aparece (abaixo)
       const impact = parseImpact(data.impact)
-      if (impact) resource.impact = impact
+      if (impact) legacyImpacts[resource.id] = impact
       if (resource.type === 'endpoint') {
         if (typeof data.parentId === 'string' && data.parentId) legacyOwners.push({ endpointId: resource.id, ownerId: data.parentId })
         resource.method = parseMethod(data.method)
@@ -198,7 +201,7 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
         protocol: String(data.protocol ?? '')
       }
       const impact = parseImpact(data.impact)
-      if (impact) relation.impact = impact
+      if (impact) legacyImpacts[relation.id] = impact
       if (typeof data.relType === 'string' && data.relType in ARCHIMATE_TYPES) {
         relation.relType = data.relType as ArchimateRelType
       }
@@ -217,9 +220,16 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
           y: Number(n.y) || 0,
           ...(typeof n.z === 'number' ? { z: n.z } : {}),
           ...(typeof n.width === 'number' && typeof n.height === 'number' ? { width: n.width, height: n.height } : {}),
-          ...(n.locked === true ? { locked: true } : {})
+          ...(n.locked === true ? { locked: true } : {}),
+          ...(parseImpact(n.impact) ? { impact: parseImpact(n.impact) } : {})
         })),
         edges: Array.isArray(data.edges) ? data.edges.map(String) : [],
+        ...(isObject(data.edgeImpacts)
+          ? (() => {
+              const valid = Object.entries(data.edgeImpacts).filter(([, v]) => parseImpact(v))
+              return valid.length ? { edgeImpacts: Object.fromEntries(valid) as Diagram['edgeImpacts'] } : {}
+            })()
+          : {}),
         shapes: Array.isArray(data.shapes) ? data.shapes.filter(isObject).map(parseShape) : [],
         ...(isObject(data.anchors) && Object.keys(data.anchors).length
           ? { anchors: data.anchors as Diagram['anchors'] }
@@ -249,6 +259,17 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
     if (linked) continue
     const id = crypto.randomUUID()
     content.relations[id] = { id, kind: 'flow', relType: 'composition', sourceId: ownerId, targetId: endpointId, label: '', protocol: '' }
+  }
+
+  // Impacto antigo (no recurso/relação) vai para cada desenho onde o item aparece, se o desenho ainda não
+  // tiver um impacto próprio para ele. Sai dos arquivos de recurso/relação no próximo Salvar.
+  if (Object.keys(legacyImpacts).length) {
+    for (const [path, d] of Object.entries(content.diagrams)) {
+      const nodes = d.nodes.map((n) => (!n.impact && legacyImpacts[n.resourceId] ? { ...n, impact: legacyImpacts[n.resourceId] } : n))
+      const edgeImpacts = { ...d.edgeImpacts }
+      for (const id of d.edges) if (!edgeImpacts[id] && legacyImpacts[id]) edgeImpacts[id] = legacyImpacts[id]
+      content.diagrams[path] = { ...d, nodes, ...(Object.keys(edgeImpacts).length ? { edgeImpacts } : {}) }
+    }
   }
 
   return { content, snapshot: { files, dirs: scan.dirs, moves: [] } }
@@ -328,6 +349,11 @@ function connectorsToSave(d: Diagram): Diagram['connectors'] {
   return kept.length ? kept : undefined
 }
 
+function edgeImpactsToSave(d: Diagram): Diagram['edgeImpacts'] {
+  const kept = Object.entries(d.edgeImpacts ?? {}).filter(([id, impact]) => d.edges.includes(id) && impact)
+  return kept.length ? Object.fromEntries(kept) : undefined
+}
+
 function anchorsToSave(d: Diagram): Diagram['anchors'] {
   const kept = Object.entries(d.anchors ?? {}).filter(([id, a]) => d.edges.includes(id) && (a.source || a.target))
   return kept.length ? Object.fromEntries(kept) : undefined
@@ -349,9 +375,12 @@ export function computeFiles(c: RepoContent): { files: Record<string, string>; p
         z: n.z,
         width: n.width && Math.round(n.width),
         height: n.height && Math.round(n.height),
-        locked: n.locked || undefined
+        locked: n.locked || undefined,
+        impact: n.impact
       })),
       edges: d.edges,
+      // Só impactos de setas que estão no desenho
+      edgeImpacts: edgeImpactsToSave(d),
       // Só grava formas quando há alguma, para não mexer em desenhos antigos
       shapes: d.shapes.length
         ? d.shapes.map((s) => ({ ...s, x: Math.round(s.x), y: Math.round(s.y), width: Math.round(s.width), height: Math.round(s.height) }))

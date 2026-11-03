@@ -3,7 +3,7 @@ import { memo, useLayoutEffect, useRef, useState } from 'react'
 import { ELEMENT_TYPES, impactInfo } from '@/model/elementTypes'
 import { useModel } from '@/model/store'
 import { commitEndpointRoute } from './EndpointRouteEditor'
-import type { Resource } from '@/model/types'
+import type { Impact, Resource } from '@/model/types'
 import { AnchorHandles } from './AnchorHandles'
 import { LockBadge } from './LockBadge'
 
@@ -16,6 +16,8 @@ export type ElementNodeData = {
   sized: boolean
   /** Travado neste desenho. */
   locked: boolean
+  /** Impacto neste desenho (a cor da borda). */
+  impact?: Impact
   /** Pontos livres da borda usados por ligações deste desenho. */
   anchors: string[]
 }
@@ -108,7 +110,7 @@ function ElementNodeComponent({ id, data, selected }: NodeProps<ElementFlowNode>
   }
 
 
-  const removed = resource.impact === 'removed'
+  const removed = data.impact === 'removed'
 
   return (
     <>
@@ -123,7 +125,7 @@ function ElementNodeComponent({ id, data, selected }: NodeProps<ElementFlowNode>
       <div
         className={`relative rounded-lg border-2 bg-white shadow-sm transition-shadow ${
           sized ? 'min-h-full w-full' : 'w-60'
-        } ${impactInfo(resource.impact).border} ${removed ? 'border-dashed opacity-70' : ''} ${
+        } ${impactInfo(data.impact).border} ${removed ? 'border-dashed opacity-70' : ''} ${
           selected ? 'shadow-lg ring-2 ring-sky-400 ring-offset-2' : ''
         }`}
       >

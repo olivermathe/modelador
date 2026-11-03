@@ -8,8 +8,7 @@ const GET = '5e9d0000-0000-4000-8000-000000000002' // GET /pedidos/{id}
 const PORTAL = '3f1c2a10-0000-4000-8000-000000000001'
 
 run(async (t) => {
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
   await t.js(`
     window.$node = (text) => [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes(text));
     window.$header = () => [...[...document.querySelectorAll('aside')].at(-1).querySelectorAll('header button')].map((b) => b.textContent.trim());

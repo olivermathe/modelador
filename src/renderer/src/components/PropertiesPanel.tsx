@@ -8,7 +8,7 @@ import {
   SHAPE_KIND_ORDER,
   SHAPE_KINDS
 } from '@/model/elementTypes'
-import { displayPath, endpointsOf, ownersOf, technologiesOf, useModel } from '@/model/store'
+import { displayPath, endpointsOf, impactIn, ownersOf, presentIds, technologiesOf, useModel } from '@/model/store'
 import { REPO_FOLDERS, type Connector, type Impact, type Relation, type Resource, type Shape, type Technology } from '@/model/types'
 import { ACCESS_MODES, ARCHIMATE_TYPES, relationNotation } from '@/model/archimate'
 import { NotationPreview } from './ArchimateMarkers'
@@ -74,6 +74,14 @@ function MultiProperties(): JSX.Element {
   const shapes = (allShapes ?? []).filter((sh) => items.includes(sh.id))
   const { removeFromDiagram, removeEdgesFromDiagram, setMultiSelection } = useModel.getState()
   const resourceIds = items.filter((id) => !shapes.some((sh) => sh.id === id))
+  const diagram = useModel((s) => (s.activeDiagram ? s.diagrams[s.activeDiagram] : undefined))
+  const relationEdges = edges.filter((id) => diagram?.edges.includes(id))
+  // Impacto comum aos recursos e setas selecionados (null = diferentes)
+  const impacts = [
+    ...resourceIds.map((id) => impactIn(diagram, 'resource', id)),
+    ...relationEdges.map((id) => impactIn(diagram, 'relation', id))
+  ]
+  const commonImpact = impacts.every((i) => i === impacts[0]) ? impacts[0] : null
   const parts = [
     resourceIds.length && `${resourceIds.length} recurso(s)`,
     shapes.length && `${shapes.length} forma(s)`,
@@ -86,6 +94,12 @@ function MultiProperties(): JSX.Element {
         <p className="mt-1 text-xs text-slate-500">{parts.join(' · ')}</p>
         <p className="mt-1 text-xs text-slate-400">Arraste um deles para mover todos juntos. Shift+clique soma ou tira itens.</p>
       </Header>
+      {impacts.length > 0 && (
+        <div>
+          <ImpactPicker value={commonImpact} onChange={(impact) => useModel.getState().setImpact(resourceIds, relationEdges, impact)} />
+          <p className="mt-1 text-[11px] text-slate-400">Vale para os recursos e ligações selecionados, só neste desenho.</p>
+        </div>
+      )}
       {items.length > 0 && <LockToggle ids={items} />}
       <div className="space-y-2 border-t border-slate-100 pt-4">
         <button
@@ -172,13 +186,14 @@ function useUnsavedPath(folder: string): string {
   return useModel((s) => `${s.folderNames[folder] ?? folder}/ (não salvo)`)
 }
 
-function ImpactPicker({ value, onChange }: { value: Impact | undefined; onChange: (v: Impact | undefined) => void }): JSX.Element {
+/** `value: null` = itens com impactos diferentes (nenhum botão marcado). */
+function ImpactPicker({ value, onChange }: { value: Impact | undefined | null; onChange: (v: Impact | undefined) => void }): JSX.Element {
   return (
     <div>
       <span className="mb-1 block text-xs font-medium text-slate-500">Impacto</span>
       <div className="grid grid-cols-4 gap-1">
         {IMPACTS.map((i) => {
-          const active = i.value === value
+          const active = value !== null && i.value === value
           return (
             <button
               key={i.label}
@@ -192,6 +207,36 @@ function ImpactPicker({ value, onChange }: { value: Impact | undefined; onChange
           )
         })}
       </div>
+    </div>
+  )
+}
+
+/**
+ * Impacto do item **no desenho aberto**: cada desenho (feature) tem o seu. Sem o item no desenho
+ * aberto, só explica onde marcar.
+ */
+function DiagramImpact({ kind, id }: { kind: 'resource' | 'relation'; id: string }): JSX.Element {
+  const diagram = useModel((s) => (s.activeDiagram ? s.diagrams[s.activeDiagram] : undefined))
+  const setImpact = useModel((s) => s.setImpact)
+  const inDiagram = !!diagram && (kind === 'resource' ? presentIds(diagram).has(id) : diagram.edges.includes(id))
+  if (!inDiagram) {
+    return (
+      <div>
+        <span className="mb-1 block text-xs font-medium text-slate-500">Impacto</span>
+        <p className="text-[11px] text-slate-400">
+          O impacto é de cada desenho. Abra um desenho com {kind === 'resource' ? 'este recurso' : 'esta ligação'} para
+          marcar.
+        </p>
+      </div>
+    )
+  }
+  return (
+    <div>
+      <ImpactPicker
+        value={impactIn(diagram, kind, id)}
+        onChange={(impact) => (kind === 'resource' ? setImpact([id], [], impact) : setImpact([], [id], impact))}
+      />
+      <p className="mt-1 text-[11px] text-slate-400">Vale só neste desenho.</p>
     </div>
   )
 }
@@ -486,7 +531,7 @@ function ResourceProperties({ resource }: { resource: Resource }): JSX.Element {
           ))}
         </select>
       </Field>
-      <ImpactPicker value={resource.impact} onChange={(impact) => update({ impact })} />
+      <DiagramImpact kind="resource" id={resource.id} />
       <TechnologyPicker resourceId={resource.id} />
       <Field label="Responsável">
         <input
@@ -569,7 +614,7 @@ function EndpointProperties({ endpoint }: { endpoint: Resource }): JSX.Element {
         <span className="mb-1 block text-xs font-medium text-slate-500">Método e caminho</span>
         <EndpointRouteEditor endpoint={endpoint} />
       </div>
-      <ImpactPicker value={endpoint.impact} onChange={(impact) => update({ impact })} />
+      <DiagramImpact kind="resource" id={endpoint.id} />
       <Field label="Descrição">
         <textarea
           className={`${inputClass} min-h-16 resize-y`}
@@ -757,7 +802,7 @@ function RelationProperties({ relation }: { relation: Relation }): JSX.Element {
               onChange={(e) => update({ protocol: e.target.value })}
             />
           </Field>
-          <ImpactPicker value={relation.impact} onChange={(impact) => update({ impact })} />
+          <DiagramImpact kind="relation" id={relation.id} />
         </>
       )}
 

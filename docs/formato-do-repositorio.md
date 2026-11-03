@@ -32,8 +32,7 @@ Regras gerais:
   "type": "service",
   "name": "API de Pedidos",
   "description": "Cria e consulta pedidos.",
-  "owner": "Time Pedidos",
-  "impact": "changed"
+  "owner": "Time Pedidos"
 }
 ```
 
@@ -43,7 +42,6 @@ Regras gerais:
 | `type` | `system` \| `service` \| `database` \| `queue` \| `schema` \| `endpoint` | sim | |
 | `name` | string | sim | Para endpoints é sempre `"<MÉTODO> <caminho>"`, recalculado. |
 | `description`, `owner` | string | sim | Podem ser `""`. |
-| `impact` | `new` \| `changed` \| `removed` | não | Ausente = sem alteração. |
 | `method` | `GET` \| `POST` \| `PUT` \| `PATCH` \| `DELETE` | só endpoint | |
 | `path` | string | só endpoint | Ex.: `/pedidos/{id}`. |
 
@@ -56,6 +54,10 @@ Endpoint repetido é verificado **pelas ligações**: ao ligar um recurso a um e
 endpoint ligado), se o recurso já estiver ligado a outro endpoint com a mesma rota (método igual e caminho
 igual ignorando maiúsculas, barra final e nome de parâmetro), o app pergunta: usar o existente (o novo dá
 lugar a ele) ou manter os dois.
+
+*Formato antigo:* `"impact"` no recurso (e na relação). Ao abrir, vai para `nodes[].impact` (e
+`edgeImpacts`) de **cada desenho onde o item aparece**, sem sobrescrever um impacto que o desenho já tenha; sai
+do arquivo do recurso/relação no próximo Salvar.
 
 *Formato antigo:* `"parentId": "<id do dono>"` no endpoint. Vira uma ligação de Composição ao abrir e o
 campo sai do arquivo no próximo Salvar.
@@ -96,7 +98,6 @@ Ligar uma tecnologia a um recurso **não** altera nenhum dos dois: cria uma rela
 | `kind` | `flow` \| `uses` | `flow`: seta nos desenhos. `uses`: recurso → tecnologia (etiqueta no nó). |
 | `sourceId`, `targetId` | string | `flow` aceita endpoint como destino ("recurso chama endpoint"). |
 | `label`, `protocol` | string | Rótulo da seta: `label [protocol]`. |
-| `impact` | `new` \| `changed` \| `removed` | Opcional. |
 | `relType` | tipo ArchiMate (abaixo) | Opcional; ausente = "Genérica" (seta cheia simples). |
 | `accessMode` | `write` \| `read` \| `readwrite` \| `access` | Só `access`; ausente = `write`. |
 | `strength` | string | Só `influence` (`+`, `++`, `-`, `--`…). |
@@ -112,9 +113,10 @@ Tipos ArchiMate (`model/archimate.ts`): `composition`, `aggregation`, `assignmen
 ```json
 {
   "nodes": [
-    { "resourceId": "<id>", "x": 0, "y": 220, "z": 4, "width": 300, "height": 180 }
+    { "resourceId": "<id>", "x": 0, "y": 220, "z": 4, "width": 300, "height": 180, "impact": "changed" }
   ],
   "edges": ["<id de relação flow>"],
+  "edgeImpacts": { "<id de relação flow>": "new" },
   "shapes": [
     {
       "id": "<uuid>", "kind": "rounded", "x": -230, "y": 170, "width": 700, "height": 470,
@@ -131,6 +133,8 @@ Tipos ArchiMate (`model/archimate.ts`): `composition`, `aggregation`, `assignmen
 | `nodes[].x`, `y` | Arredondados para inteiro ao gravar. |
 | `nodes[].z` | Ordem de empilhamento compartilhada com as formas. Opcional (= 0). |
 | `nodes[].width`, `height` | Tamanho escolhido pelo usuário **neste desenho**. Opcional (= automático). |
+| `nodes[].impact` | Impacto do recurso **neste desenho** (feature): `new` \| `changed` \| `removed`. Omitido = sem alteração. O mesmo recurso pode ter outro impacto (ou nenhum) em outro desenho. |
+| `edgeImpacts` | `{ "<id da relação>": "new" \| "changed" \| "removed" }`: impacto de cada seta **neste desenho**. Só setas presentes em `edges` são gravadas; omitido quando vazio. |
 | `connectors` | Ligações **só visuais** entre formas (ou forma e recurso): `{ id, source, target, sourceHandle?, targetHandle?, label?, arrow?: "end"\|"both"\|"none", dashed?, color? }`. Não são relações: nada vai para a pasta de relações. Omitido quando vazio; ligações com ponta que saiu do desenho não são gravadas. |
 | `nodes[].locked`, `shapes[].locked` | `true` = travado neste desenho (não move nem é selecionado). Omitido quando destravado. |
 | `edges` | Relações `flow` exibidas; só aparecem se as duas pontas têm nó no desenho. |

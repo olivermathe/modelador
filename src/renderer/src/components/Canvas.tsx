@@ -213,6 +213,7 @@ export function Canvas(): JSX.Element {
             sized: !!(n.width && n.height),
             resource,
             locked: !!n.locked,
+            impact: n.impact,
             anchors: freeOf(n.resourceId),
             technologies: technologiesOf(n.resourceId, relations, technologies).map((t) => t.technology.name),
             parentName:
@@ -338,7 +339,9 @@ export function Canvas(): JSX.Element {
       const label = [strength, rel.label, rel.protocol && `[${rel.protocol}]`].filter(Boolean).join(' ')
       const isSelected = selected.edges.has(id)
       // Cor do impacto; azul quando selecionada (as pontas precisam da mesma cor)
-      const color = isSelected ? SELECTED_STROKE : impactInfo(rel.impact).stroke
+      // Impacto é do desenho (feature), não da relação
+      const impact = diagram.edgeImpacts?.[id]
+      const color = isSelected ? SELECTED_STROKE : impactInfo(impact).stroke
       const notation = relationNotation(rel)
       return [
         {
@@ -353,9 +356,9 @@ export function Canvas(): JSX.Element {
           zIndex: zFor(source.resourceId, target.resourceId),
           style: {
             stroke: color,
-            strokeWidth: rel.impact || isSelected ? 2 : 1.5,
+            strokeWidth: impact || isSelected ? 2 : 1.5,
             // Excluída: tracejado longo, a menos que o tipo ArchiMate já tenha traço próprio
-            strokeDasharray: notation.dash ?? (rel.impact === 'removed' ? '10 5' : undefined)
+            strokeDasharray: notation.dash ?? (impact === 'removed' ? '10 5' : undefined)
           },
           markerStart: notation.start && markerId(notation.start, color),
           markerEnd: notation.end && markerId(notation.end, color),
@@ -549,7 +552,7 @@ export function Canvas(): JSX.Element {
       if (payload.kind === 'shape') return addShape(payload.shape, point)
       const position = { x: point.x - NODE_HALF.x, y: point.y - NODE_HALF.y }
       if (payload.kind === 'new') createResource(payload.type, position)
-      else placeResource(payload.id, position)
+      else placeResource(payload.id, position, !payload.keepSelection)
     },
     [createResource, placeResource, toggleTechnology, addShape, screenToFlowPosition, resources]
   )

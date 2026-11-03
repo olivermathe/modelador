@@ -5,8 +5,7 @@
 const { run } = require('./harness.cjs')
 
 run(async (t) => {
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
 
   t.step('legenda aparece na Paleta, junto das formas')
   t.assert(await t.js(`!!document.querySelector('aside [aria-label="Legenda de impacto"][draggable="true"]')`), 'item na Paleta')

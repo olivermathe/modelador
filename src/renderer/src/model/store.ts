@@ -9,6 +9,7 @@ import type {
   EdgeAnchors,
   HttpMethod,
   Diagram,
+  Impact,
   ElementType,
   Relation,
   RepoScan,
@@ -108,7 +109,8 @@ interface ModelState extends RepoContent {
    * Quem chama verifica antes se o dono já tem um endpoint com a mesma rota.
    */
   createEndpoint: (ownerId: string, method: HttpMethod, path: string) => string
-  placeResource: (id: string, position: { x: number; y: number }) => void
+  /** `select = false` mantém a seleção atual (ex.: arrastado da aba Relacionamentos). */
+  placeResource: (id: string, position: { x: number; y: number }, select?: boolean) => void
   updateResource: (id: string, patch: Partial<Omit<Resource, 'id'>>) => void
   deleteResource: (id: string) => void
   /** Chamado ao terminar de digitar o nome: abre o aviso se outro recurso já tem esse nome. */
@@ -172,6 +174,11 @@ interface ModelState extends RepoContent {
   setMultiSelection: (items: string[], edges: string[]) => void
   /** Trava/destrava recursos e formas no desenho aberto. */
   setLocked: (ids: string[], locked: boolean) => void
+  /**
+   * Impacto de recursos (`items`) e setas (`edges`) **no desenho aberto**. O impacto é do desenho
+   * (feature), não do recurso: em outro desenho o mesmo recurso pode ter outro impacto.
+   */
+  setImpact: (items: string[], edges: string[], impact: Impact | undefined) => void
 }
 
 const emptyContent: RepoContent = {
@@ -496,12 +503,13 @@ export const useModel = create<ModelState>((set, get) => ({
     return endpoint.id
   },
 
-  placeResource: (id, position) =>
+  placeResource: (id, position, select = true) =>
     set((s) => {
       const active = s.activeDiagram ? s.diagrams[s.activeDiagram] : undefined
       if (!active || !s.resources[id]) return s
+      const selection = select ? { selection: { kind: 'resource' as const, id } } : {}
       // Um recurso aparece no máximo uma vez por desenho
-      if (presentIds(active).has(id)) return { selection: { kind: 'resource', id } }
+      if (presentIds(active).has(id)) return selection
       return {
         ...updateActive(s, (d) =>
           withImpliedEdges(
@@ -509,7 +517,7 @@ export const useModel = create<ModelState>((set, get) => ({
             s.relations
           )
         ),
-        selection: { kind: 'resource', id }
+        ...selection
       }
     }),
 
@@ -519,7 +527,6 @@ export const useModel = create<ModelState>((set, get) => ({
       if (!current) return s
       const next = { ...current, ...patch }
       if (next.type === 'endpoint') next.name = endpointName(next.method, next.path)
-      if ('impact' in patch && !patch.impact) delete next.impact
       return { resources: { ...s.resources, [id]: next }, dirty: true }
     }),
 
@@ -767,7 +774,7 @@ export const useModel = create<ModelState>((set, get) => ({
       if (!current) return s
       const next = { ...current, ...patch }
       // Campos opcionais vazios saem do arquivo
-      for (const key of ['impact', 'relType', 'accessMode', 'strength', 'directed'] as const) {
+      for (const key of ['relType', 'accessMode', 'strength', 'directed'] as const) {
         if (key in patch && !patch[key]) delete next[key]
       }
       return { relations: { ...s.relations, [id]: next }, dirty: true }
@@ -980,8 +987,36 @@ export const useModel = create<ModelState>((set, get) => ({
           shapes: d.shapes.map((sh) => (ids.includes(sh.id) ? apply(sh) : sh))
         }
       })
+    ),
+
+  setImpact: (items, edges, impact) =>
+    set((s) =>
+      updateActive(s, (d) => {
+        const edgeImpacts = { ...d.edgeImpacts }
+        for (const id of edges) {
+          if (!d.edges.includes(id)) continue
+          if (impact) edgeImpacts[id] = impact
+          else delete edgeImpacts[id]
+        }
+        const { edgeImpacts: _old, ...rest } = d
+        return {
+          ...rest,
+          nodes: d.nodes.map((n) => {
+            if (!items.includes(n.resourceId)) return n
+            const { impact: _prev, ...node } = n
+            return impact ? { ...node, impact } : node
+          }),
+          ...(Object.keys(edgeImpacts).length ? { edgeImpacts } : {})
+        }
+      })
     )
 }))
+
+/** Impacto de um recurso ou seta no desenho `d` (ausente = sem alteração). */
+export function impactIn(d: Diagram | undefined, kind: 'resource' | 'relation', id: string): Impact | undefined {
+  if (!d) return undefined
+  return kind === 'resource' ? d.nodes.find((n) => n.resourceId === id)?.impact : d.edgeImpacts?.[id]
+}
 
 // Qualquer ação que define `selection` diretamente (criar, ligar, desfazer…) encerra a seleção múltipla
 useModel.subscribe((state, prev) => {

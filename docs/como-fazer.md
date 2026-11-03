@@ -16,7 +16,8 @@
    `scripts/e2e/connectors.cjs` (ligações visuais entre formas) e `scripts/e2e/border.cjs` (ligar em qualquer
    ponto da borda) e `scripts/e2e/legend.cjs` (legenda de impacto) e
    `scripts/e2e/markdown-images.cjs` (imagens no preview do Markdown) e `scripts/e2e/skill.cjs` (arquivos
-   escritos seguindo a skill de cadastro abrem e não são regravados). Cada um termina com `Tudo certo` (código 0)
+   escritos seguindo a skill de cadastro abrem e não são regravados) e `scripts/e2e/relations-tab.cjs`
+   (aba Relacionamentos) e `scripts/e2e/impact.cjs` (impacto por desenho e migração). Cada um termina com `Tudo certo` (código 0)
    ou lista as falhas (código 1). O caminho temporário impresso no fim tem o repositório resultante e as
    capturas de tela.
 3. Para mudanças visuais, tire uma captura no teste (`await t.shot('nome.png')`) e confira a imagem.
@@ -29,6 +30,8 @@ Copie `scripts/e2e/smoke.cjs` para um arquivo novo ao lado e rode com `electron 
 | Helper | Uso |
 |---|---|
 | `t.js(código)` | Executa JS na página e devolve o resultado (precisa ser serializável; termine com `0` se o último valor for uma função ou elemento). Cada chamada roda no mesmo escopo global: use `{ const x = … }` para não redeclarar. |
+| `t.until(código, ms)` | Espera a expressão JS ficar verdadeira (padrão 5 s). Prefira a `t.wait` fixo: logo depois do build a interface demora mais e esperas fixas falham de vez em quando. |
+| `t.openDiagram(nome)` | Abre um desenho pela árvore e espera os itens e as setas aparecerem. Use no lugar de clicar + `t.wait`. |
 | `t.step`, `t.assert(ok, msg)` | Log e verificação. |
 | `t.markAllOld()`, `t.changedFiles()` | Detectar quais arquivos o app regravou. |
 | `t.files()`, `t.read(rel)`, `t.exists(rel)` | Inspecionar o repositório em disco. |

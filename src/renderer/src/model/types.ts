@@ -24,7 +24,10 @@ export type ElementType = 'system' | 'service' | 'database' | 'queue' | 'schema'
 
 export type HttpMethod = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
 
-/** O que a mudança faz com o item. Ausente = sem alteração. */
+/**
+ * O que a mudança faz com o item **neste desenho** (feature). Fica no desenho, não no recurso/relação:
+ * o mesmo recurso pode ser novo num desenho e sem alteração em outro. Ausente = sem alteração.
+ */
 export type Impact = 'new' | 'changed' | 'removed'
 
 /** aplicações/<nome>.json — endpoints: aplicações/<servico>--<metodo>-<caminho>.json */
@@ -34,7 +37,6 @@ export interface Resource {
   name: string
   description: string
   owner: string
-  impact?: Impact
   /** Somente endpoints. O dono não é um campo: é a ligação de Composição dono → endpoint. */
   method?: HttpMethod
   path?: string
@@ -78,7 +80,6 @@ export interface Relation {
   targetId: string
   label: string
   protocol: string
-  impact?: Impact
   /** Somente `kind: 'flow'`: tipo ArchiMate da ligação. */
   relType?: ArchimateRelType
   /** Somente acesso: direção do acesso aos dados. */
@@ -100,6 +101,8 @@ export interface DiagramNode {
   /** Tamanho escolhido pelo usuário neste desenho; ausente = automático. */
   width?: number
   height?: number
+  /** Impacto do recurso neste desenho. */
+  impact?: Impact
 }
 
 export type ShapeKind = 'rectangle' | 'rounded' | 'ellipse' | 'text' | 'legend'
@@ -133,6 +136,8 @@ export interface Diagram {
    * conector, ex.: "top-2"). Ausente = escolhido automaticamente.
    */
   anchors?: Record<string, EdgeAnchors>
+  /** Impacto de cada seta (id da relação) neste desenho. */
+  edgeImpacts?: Record<string, Impact>
   /** Ligações só visuais (formas ↔ formas/recursos). Não são relações: não vão para `relações/`. */
   connectors?: Connector[]
 }

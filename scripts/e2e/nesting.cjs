@@ -7,8 +7,7 @@ const { run } = require('./harness.cjs')
 const REL_API_FILA = '9c3d0000-0000-4000-8000-000000000003' // API de Pedidos → pedido-criado
 
 run(async (t) => {
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
   await t.js(`
     window.$node = (text) => [...document.querySelectorAll('.react-flow__node-element')].find((n) => n.textContent.includes(text));
     window.$edges = () => document.querySelectorAll('.react-flow__edge').length;

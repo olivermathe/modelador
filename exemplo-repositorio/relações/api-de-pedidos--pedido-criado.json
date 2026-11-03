@@ -5,6 +5,5 @@
   "targetId": "3f1c2a10-0000-4000-8000-000000000004",
   "label": "Publica evento",
   "protocol": "Kafka",
-  "impact": "new",
   "relType": "flow"
 }

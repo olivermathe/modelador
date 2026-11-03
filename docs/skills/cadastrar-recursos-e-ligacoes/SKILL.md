@@ -47,9 +47,11 @@ validador `validar.mjs` (ao lado deste arquivo) no fim. Ele também só lê arqu
 - **Ids** são UUID v4 novos (`crypto.randomUUID()`, `uuidgen | tr A-Z a-z`, ou equivalente). Nunca reuse
   nem invente ids "bonitos".
 - **Nunca altere** arquivos que você não precisa mudar, nem a formatação deles.
-- **Campos opcionais só existem quando têm valor.** Não escreva `"impact": null`, `"relType": ""` etc.
+- **Campos opcionais só existem quando têm valor.** Não escreva `"relType": ""`, `"impact": null` etc.
   Campos obrigatórios de texto podem ser `""`.
-- **Cor é impacto.** Não há campo de cor em recursos ou ligações; quem dá cor é `impact`.
+- **Cor é impacto, e impacto é do desenho.** Não há campo de cor em recursos ou ligações. O impacto
+  (Novo/Alterado/Excluído) **não vai no arquivo do recurso nem da ligação**: vai no desenho da feature
+  (seção 8), porque o mesmo recurso pode ser novo numa feature e sem alteração em outra.
 - **JSON** com 2 espaços de indentação, UTF-8 e **quebra de linha no fim do arquivo**.
 
 ## 3. Nome do arquivo (slug)
@@ -78,8 +80,7 @@ Se o caminho já existir (outro item com o mesmo slug), acrescente `-2`, `-3`…
   "type": "service",
   "name": "API de Pedidos",
   "description": "Cria e consulta pedidos.",
-  "owner": "Time Pedidos",
-  "impact": "new"
+  "owner": "Time Pedidos"
 }
 ```
 
@@ -89,10 +90,8 @@ Se o caminho já existir (outro item com o mesmo slug), acrescente `-2`, `-3`…
 | `type` | `system` (Sistema), `service` (Serviço/API), `database` (Banco), `queue` (Fila/Tópico), `schema` (contrato de dados: payload, evento, tabela), `endpoint` | sim |
 | `name` | texto | sim |
 | `description`, `owner` | texto (pode ser `""`) | sim |
-| `impact` | `new` (Novo), `changed` (Alterado), `removed` (Excluído) | não; ausente = sem alteração |
 
-Use `impact` quando o pedido for de uma mudança (feature, projeto): o que a feature cria é `new`, o que
-ela muda é `changed`, o que ela desliga é `removed`. Para documentar o que já existe, omita.
+Não escreva `impact` aqui (formato antigo): o impacto vai no desenho (seção 8).
 
 ## 5. Endpoint
 
@@ -181,7 +180,6 @@ endpoint, o slug do nome dele, ex.: `get-pedidos-id`, sem o prefixo do dono).
 | `accessMode` | Só com `access`: `write` (padrão, pode omitir), `read`, `readwrite`, `access`. |
 | `strength` | Só com `influence`: `+`, `++`, `-`, `--`… |
 | `directed` | Só com `association`: `true` para ter seta. |
-| `impact` | `new`, `changed`, `removed`; opcional. |
 
 **Tipos ArchiMate (`relType`) e direção** (origem → destino):
 
@@ -213,8 +211,18 @@ desenho existente:
 - adicione em `edges` o `id` de cada ligação **`flow`** a mostrar (só aparece se as duas pontas estiverem
   em `nodes`). Ligações `uses` não entram: a tecnologia aparece como etiqueta no recurso.
 
-Mantenha os campos que o desenho já tem (`shapes`, `anchors`, `connectors`, `z`…). Não crie desenho novo
-se não pedirem.
+**Impacto (cor) neste desenho.** Quando o pedido for de uma mudança (feature, projeto), marque no desenho
+da feature o que ela cria (`new`, Novo), muda (`changed`, Alterado) ou desliga (`removed`, Excluído):
+
+- recurso: `"impact"` no item de `nodes` (`{ "resourceId": "<id>", "x": 0, "y": 0, "impact": "new" }`);
+- ligação: no mapa `edgeImpacts` do desenho, pelo id da ligação (que precisa estar em `edges`):
+  `"edgeImpacts": { "<id da ligação>": "new" }`.
+
+Sem impacto = omita (`impact` ausente; `edgeImpacts` ausente se vazio). Para só documentar o que já existe,
+não marque nada. O impacto de um desenho não afeta os outros.
+
+Mantenha os campos que o desenho já tem (`shapes`, `anchors`, `connectors`, `z`, `edgeImpacts`…). Não crie
+desenho novo se não pedirem.
 
 ## 9. Conferir
 
@@ -241,10 +249,11 @@ pedido-criado. É novo na feature."* Supondo `pedido-criado` já cadastrado (id 
 
 | Arquivo | Conteúdo-chave |
 |---|---|
-| `aplicações/notificacoes.json` | `type: service`, `name: "Notificações"`, `impact: "new"` |
-| `aplicações/notificacoes--post-notificacoes.json` | `type: endpoint`, `name: "POST /notificacoes"`, `method: "POST"`, `path: "/notificacoes"`, `impact: "new"` |
+| `aplicações/notificacoes.json` | `type: service`, `name: "Notificações"` |
+| `aplicações/notificacoes--post-notificacoes.json` | `type: endpoint`, `name: "POST /notificacoes"`, `method: "POST"`, `path: "/notificacoes"` |
 | `relações/notificacoes--post-notificacoes.json` | `flow`, `relType: "composition"`, Notificações → endpoint |
-| `relações/pedido-criado--notificacoes.json` | `flow`, `relType: "flow"`, pedido-criado → Notificações, `protocol: "Kafka"`, `impact: "new"` |
+| `relações/pedido-criado--notificacoes.json` | `flow`, `relType: "flow"`, pedido-criado → Notificações, `protocol: "Kafka"` |
 | `relações/notificacoes--usa--node-js.json` | `uses`, Notificações → Node.js |
+| desenho da feature (ex.: `projetos/.../diagrama.json`) | `nodes` com Notificações e o endpoint (`"impact": "new"`); `edges` com as duas ligações `flow`; `edgeImpacts` com a de pedido-criado → Notificações como `"new"` |
 
 (Com pastas em inglês, os mesmos arquivos ficam em `applications/` e `relations/`.)

@@ -21,8 +21,7 @@ run(async (t) => {
     window.$nameInput = () => [...document.querySelectorAll('label')].find((l) => l.textContent.startsWith('Nome'))?.querySelector('input');
     window.$rename = (value) => { const i = $nameInput(); i.focus(); $type(i, value); $blur(i) };
     0`)
-  await t.js(`$row('Visão geral').click()`)
-  await t.wait(800)
+  await t.openDiagram('Visão geral')
   t.markAllOld()
 
   t.step('novo recurso com nome existente: usar o existente')

@@ -15,7 +15,8 @@ Caminhos relativos a `src/renderer/src/` (exceto onde indicado).
 | Abas de desenhos/documentos | `components/Toolbar.tsx` (`DiagramTabs`); store `openDiagrams`, `activeDiagram` |
 | Dica imediata ao passar o mouse | `components/Tooltip.tsx` |
 | Paleta (novo recurso, formas, tipo da nova ligação), só ícones | `components/Palette.tsx`, `RelTypePicker.tsx` (`RelTypeGrid`); arrastar: `components/dnd.ts` + `Canvas.tsx` `onDrop` |
-| Painel direito com abas Paleta/Propriedades | `components/SidePanel.tsx` (troca automática pela seleção) |
+| Painel direito com abas Paleta/Propriedades/Relacionamentos | `components/SidePanel.tsx` (troca automática pela seleção; aba ativa com nome, demais só ícone) |
+| Aba Relacionamentos (recursos ligados, arrastáveis, com filtro) | `components/RelationsTab.tsx` (`linkedResources`, filtro `query`/`onlyMissing`); `dnd.ts` (`keepSelection`); store `placeResource(id, pos, select)`; `Canvas.tsx` `onDrop` |
 | Propriedades de recurso, endpoint, tecnologia, relação, forma | `components/PropertiesPanel.tsx` |
 | Recursos no desenho (tipo, impacto, tecnologias; endpoints com nó próprio) | `components/ElementNode.tsx` |
 | Redimensionar recurso (mínimo = conteúdo) | `ElementNode.tsx` (`NodeResizer`, `fitHeightAfterResize`); store `resizeNode`; `Canvas.tsx` `onNodesChange` |
@@ -36,7 +37,7 @@ Caminhos relativos a `src/renderer/src/` (exceto onde indicado).
 | Pergunta "usar o existente / criar novo" | `components/ChoiceDialog.tsx`; store `choice`, `ask` |
 | Exclusão do desenho × permanente | `components/deleteActions.ts` (`askPermanentDelete`); Shift+Delete em `Canvas.tsx`; `ContextMenu.tsx`; botões em `PropertiesPanel.tsx` |
 | Ligação já existente (pergunta) | store `relationBetween`, `connect` (abre `choice`), `showRelation` |
-| Impacto (Novo/Alterado/Excluído) e cores | `model/elementTypes.ts` `IMPACTS`, `impactInfo`; `PropertiesPanel.tsx` `ImpactPicker` |
+| Impacto (Novo/Alterado/Excluído) por desenho e cores | `model/elementTypes.ts` `IMPACTS`, `impactInfo`; store `setImpact`, `impactIn`; `nodes[].impact`/`edgeImpacts` no desenho; `PropertiesPanel.tsx` `DiagramImpact`, `ImpactPicker` (também em `MultiProperties`); `Canvas.tsx` (cor das setas, `impact` no nó); migração em `repo.ts` `parseScan` (`legacyImpacts`) |
 | Tecnologias (várias por recurso, criar pela busca) | `PropertiesPanel.tsx` `TechnologyPicker`; store `toggleTechnology`, `createTechnology`; soltar tecnologia sobre recurso em `Canvas.tsx` `onDrop` |
 | Aviso de recurso com nome já existente (usar o existente / criar novo) | `components/DuplicateResourceDialog.tsx`; `PropertiesPanel.tsx` `ResourceProperties` (`commitName`); store `checkDuplicateName`, `mergeResource`, `sameNameResources` |
 | Endpoints como recursos (dono = ligação de Composição) | store `createEndpoint`, `endpointsOf`, `ownersOf`; `PropertiesPanel.tsx` `EndpointList`, `EndpointProperties` |
