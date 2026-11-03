@@ -1,0 +1,42 @@
+# Empacotamento do app (instaladores para Windows e macOS). Usado por `npm run dist` e pelo
+# workflow .github/workflows/release.yml. Ícones em build/ (gerados por `npm run icon`).
+appId: com.olivermathe.modelador
+productName: Modelador
+copyright: Matheus Oliveira
+directories:
+  buildResources: build
+  output: dist
+files:
+  # Só o build (out/) e a logo usada pela janela/Dock (resources/icon.png); o resto fica de fora
+  - out/**
+  - resources/icon.png
+  - package.json
+artifactName: ${productName}-${version}-${os}-${arch}.${ext}
+
+mac:
+  category: public.app-category.developer-tools
+  target:
+    - target: dmg
+      arch: [arm64, x64]
+    - target: zip
+      arch: [arm64, x64]
+  # Sem certificado da Apple: app não assinado (o macOS pede confirmação na primeira abertura)
+  identity: null
+
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  artifactName: ${productName}-${version}-windows-instalador.${ext}
+
+portable:
+  artifactName: ${productName}-${version}-windows-portatil.${ext}
+
+# A publicação na página de Releases é feita pelo workflow (gh release), não pelo electron-builder
+publish: null

@@ -33,4 +33,7 @@ npm run dev          # app em desenvolvimento
 npm run typecheck    # tsc nos dois projetos (main/preload e renderer)
 npm run build        # typecheck + build em out/
 npm run test:e2e     # build + teste de ponta a ponta no app real (ver como-fazer.md)
+npm run dist:mac     # instaladores do macOS em dist/ (o CI gera os de Windows e Mac a cada push)
 ```
+
+Releases: `.github/workflows/release.yml` + `electron-builder.yml` (ver decisoes.md, item 51).

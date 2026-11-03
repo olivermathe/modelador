@@ -10,12 +10,31 @@ npm install
 npm run dev      # app em modo desenvolvimento
 npm run build    # typecheck + build em out/
 npm run icon     # regera os ícones a partir de resources/icon.svg
+npm run dist:mac # instaladores do macOS em dist/ (dist:win para Windows, num Windows)
 ```
 
 A logo fica em `resources/icon.svg`. `npm run icon` gera `resources/icon.png` (janela e Dock) e
 `build/icon.icns` / `build/icon.ico` (para empacotar no macOS e no Windows).
 
 Para experimentar, abra a pasta `exemplo-repositorio/` pelo botão **Abrir pasta**.
+
+## Instalar (Releases)
+
+A cada push na `master` (ou `main`), o GitHub Actions ([release.yml](.github/workflows/release.yml)) gera os
+instaladores e publica uma release nova em **Releases** do repositório (`v<versão>-build.<n>`):
+
+| Arquivo | Para |
+|---|---|
+| `Modelador-<versão>-windows-instalador.exe` | Windows: instalador |
+| `Modelador-<versão>-windows-portatil.exe` | Windows: roda sem instalar |
+| `Modelador-<versão>-mac-arm64.dmg` / `.zip` | macOS com Apple Silicon (M1, M2…) |
+| `Modelador-<versão>-mac-x64.dmg` / `.zip` | macOS com Intel |
+
+Os apps **não são assinados** (não há certificado da Apple nem da Microsoft). No Windows, na tela "O Windows
+protegeu o computador", clique em "Mais informações" → "Executar assim mesmo". No macOS, na primeira vez,
+botão direito no app → "Abrir" (ou `xattr -cr /Applications/Modelador.app`). Também dá para rodar o workflow
+à mão: aba **Actions** → **Release** → **Run workflow**. O empacotamento está em
+[electron-builder.yml](electron-builder.yml).
 
 ## Estrutura do repositório
 
