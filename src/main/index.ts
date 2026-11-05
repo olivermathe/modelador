@@ -6,6 +6,9 @@ import { basename, dirname, join, relative, resolve } from 'path'
 /** Pastas que formam um repositório do Modelador (nome canônico, usado pelo app). */
 const REPO_FOLDERS = ['aplicações', 'tecnologias', 'relações', 'projetos']
 
+/** Único arquivo na raiz do repositório que o app lê e grava: as relações permitidas entre tipos. */
+const METAMODEL_FILE = 'metamodelo.json'
+
 /**
  * Nomes aceitos em disco para cada pasta, em português ou inglês (sem diferenciar maiúsculas e
  * acentos). A pasta fica com o nome que tem; o app só usa o canônico internamente.
@@ -107,9 +110,10 @@ async function locateFolders(root: string): Promise<{ disk: string; key: string;
 
 /**
  * Resolve um caminho relativo (com a pasta raiz no nome canônico) para o caminho real em disco,
- * garantindo que fique dentro de uma das pastas do repositório.
+ * garantindo que fique dentro de uma das pastas do repositório (ou seja o `metamodelo.json` da raiz).
  */
 async function safePath(root: string, relPath: string): Promise<string> {
+  if (relPath === METAMODEL_FILE) return join(root, METAMODEL_FILE)
   const parts = relPath.split('/')
   const top = nfc(parts[0])
   if (!REPO_FOLDERS.map(nfc).includes(top) || parts.length < 2 || parts.includes('..')) {
@@ -146,6 +150,12 @@ async function scanRepo(root: string): Promise<RepoScan> {
   const located = await locateFolders(root)
   for (const folder of located) {
     if (!folder.missing) await walk(folder.disk, folder.key)
+  }
+  try {
+    const content = await readFile(join(root, METAMODEL_FILE), 'utf-8')
+    files.push({ path: METAMODEL_FILE, content: content.length > MAX_FILE_SIZE ? '' : content })
+  } catch {
+    // Sem meta modelo: qualquer ligação é aceita
   }
   return { root, dirs, files, folders: Object.fromEntries(located.map((f) => [f.key, f.disk])) }
 }

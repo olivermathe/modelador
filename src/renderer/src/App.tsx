@@ -5,6 +5,7 @@ import { Canvas } from './components/Canvas'
 import { DuplicateResourceDialog } from './components/DuplicateResourceDialog'
 import { ChoiceDialog } from './components/ChoiceDialog'
 import { FeatureDialog } from './components/FeatureDialog'
+import { MetamodelDialog } from './components/MetamodelDialog'
 import { Notice } from './components/Notice'
 import { MarkdownEditor } from './components/MarkdownEditor'
 import { SidePanel } from './components/SidePanel'
@@ -54,6 +55,7 @@ export function App(): JSX.Element {
         )}
         <DuplicateResourceDialog />
         <FeatureDialog />
+        <MetamodelDialog />
         <ChoiceDialog />
         <Notice />
       </div>

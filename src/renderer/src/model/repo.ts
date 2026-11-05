@@ -1,4 +1,5 @@
 import { ARCHIMATE_TYPES } from './archimate'
+import { METAMODEL_FILE, metamodelToSave, parseMetamodel, type Metamodel } from './metamodel'
 import {
   REPO_FOLDERS,
   type AccessMode,
@@ -35,6 +36,8 @@ export interface RepoContent {
   pendingFiles: Record<string, string>
   /** Pastas como devem ficar em disco depois de salvar. */
   dirs: string[]
+  /** Relações permitidas entre tipos (`metamodelo.json` na raiz). `null` = sem meta modelo, tudo vale. */
+  metamodel: Metamodel | null
 }
 
 /** Estado do disco na última leitura/gravação, para calcular o que salvar. */
@@ -119,7 +122,8 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
     paths: {},
     otherFiles: [],
     pendingFiles: {},
-    dirs: scan.dirs
+    dirs: scan.dirs,
+    metamodel: null
   }
   const files: Record<string, string> = {}
   /** Formato antigo: dono do endpoint num campo (`parentId`); vira ligação de Composição. */
@@ -139,6 +143,10 @@ export function parseScan(scan: RepoScan): { content: RepoContent; snapshot: Dis
 
     if (isDoc(file.path)) {
       content.docs[file.path] = file.content
+    } else if (file.path === METAMODEL_FILE) {
+      // JSON inválido: fica de fora (não é regravado nem apagado)
+      if (!isObject(data)) continue
+      content.metamodel = parseMetamodel(data)
     } else if (folder === REPO_FOLDERS.resources && isObject(data) && typeof data.id === 'string') {
       const resource: Resource = {
         id: data.id,
@@ -392,6 +400,7 @@ export function computeFiles(c: RepoContent): { files: Record<string, string>; p
     })
   }
   for (const [path, text] of Object.entries(c.docs)) files[path] = text
+  if (c.metamodel) files[METAMODEL_FILE] = toJson(metamodelToSave(c.metamodel))
   return { files, paths }
 }
 

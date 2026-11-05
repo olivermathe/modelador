@@ -32,6 +32,8 @@ validador `validar.mjs` (ao lado deste arquivo) no fim. Ele também só lê arqu
 2. **Leia todos os JSON de recursos, tecnologias e ligações.** Você vai precisar dos `id` para ligar, e
    para não duplicar (passo 2).
 3. **Abra 1 ou 2 arquivos de exemplo** de cada pasta e copie o estilo (ordem das chaves, campos usados).
+4. **Leia `metamodelo.json`, se existir na raiz.** Ele diz que tipos de ligação são aceitos entre cada par
+   de tipos de recurso (seção 7). Não crie nem altere esse arquivo, a não ser que o usuário peça.
 
 ## 2. Regras que não podem quebrar
 
@@ -197,6 +199,18 @@ endpoint, o slug do nome dele, ex.: `get-pedidos-id`, sem o prefixo do dono).
 | `specialization` | É um tipo particular de | específico → genérico |
 | `association` | Genérica, sem semântica | qualquer |
 
+**Meta modelo.** Se a raiz do repositório tiver `metamodelo.json`, a ligação **precisa** respeitá-lo:
+
+```json
+{ "relations": { "service": { "database": ["access", "association"] } } }
+```
+
+`relations[<type da origem>][<type do destino>]` lista os `relType` aceitos. Par ausente ou lista vazia =
+nenhuma ligação entre esses tipos. Ligação sem `relType` (genérica) só vale se o par aceitar algum tipo.
+Composição `system`/`service` → `endpoint` é sempre aceita. Se o tipo que você escolheria não é aceito,
+use um dos aceitos; se o par não aceita nada, **não crie a ligação** e avise o usuário. Sem o arquivo,
+qualquer tipo vale.
+
 Se o usuário não disser o tipo, prefira: chamada síncrona de API → `serving` (do chamado para quem
 chama) ou `triggering`; mensagem/evento → `flow`; banco → `access` com `accessMode`; dono de
 endpoint → `composition`.
@@ -230,15 +244,17 @@ desenho novo se não pedirem.
 2. Todo `sourceId`/`targetId`/`resourceId` aponta para um id que existe.
 3. Nomes de arquivo seguem a seção 3 (inclusive o `--usa--` e o prefixo do dono do endpoint).
 4. Sem campos opcionais vazios.
-5. Rode o validador (Node.js 18+), apontando para a raiz do repositório:
+5. Ligações dentro do `metamodelo.json`, se ele existir.
+6. Rode o validador (Node.js 18+), apontando para a raiz do repositório:
 
    ```bash
    node docs/skills/cadastrar-recursos-e-ligacoes/validar.mjs <pasta-do-repositorio>
    ```
 
    Ele lista erros (id repetido, referência quebrada, JSON inválido) e avisos (nome de arquivo que o app
-   renomearia, recurso ou ligação repetidos, campo opcional vazio). Corrija tudo antes de terminar.
-6. Diga ao usuário o que criou (caminhos) e o que reaproveitou. Ele abre no Modelador (ou Recarregar) para
+   renomearia, recurso ou ligação repetidos, campo opcional vazio). Ligação fora do meta modelo é erro.
+   Corrija tudo antes de terminar.
+7. Diga ao usuário o que criou (caminhos) e o que reaproveitou. Ele abre no Modelador (ou Recarregar) para
    ver, e versiona com Git.
 
 ## Exemplo completo

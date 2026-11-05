@@ -1,6 +1,7 @@
-import { FolderOpen, ImageDown, PackagePlus, Redo2, RefreshCw, Save, Undo2, X } from 'lucide-react'
+import { FolderOpen, Grid3x3, ImageDown, PackagePlus, Redo2, RefreshCw, Save, Undo2, X } from 'lucide-react'
 import { useEffect } from 'react'
 import { openRepo, reloadRepo, saveRepo } from '@/model/fileActions'
+import { violations } from '@/model/metamodel'
 import { fileStem } from '@/model/repo'
 import { useModel } from '@/model/store'
 import { useExportJpeg } from './exportImage'
@@ -64,6 +65,7 @@ export function Toolbar(): JSX.Element {
   const diagramOpen = useModel((s) => !!s.activeDiagram && s.activeDiagram in s.diagrams)
   const exportJpeg = useExportJpeg()
   const { canUndo, canRedo } = useModel((s) => s.history)
+  const outside = useModel((s) => violations(s.metamodel, s.resources, s.relations).length)
   const isMac = navigator.platform.toLowerCase().includes('mac')
 
   // Atalhos do menu nativo (⌘O, ⌘S, ⌘E)
@@ -100,6 +102,14 @@ export function Toolbar(): JSX.Element {
           </IconButton>
           <ToolbarButton onClick={() => useModel.getState().openFeatureDialog()} title="Criar pasta de feature com diagrama, processo e documento">
             <PackagePlus className="h-4 w-4" /> Nova feature
+          </ToolbarButton>
+          <ToolbarButton onClick={() => useModel.getState().setMetamodelOpen(true)} title="Relações permitidas entre os tipos de recurso">
+            <Grid3x3 className="h-4 w-4" /> Meta modelo
+            {outside > 0 && (
+              <span data-outside-count title="Ligações fora do meta modelo" className="rounded-full bg-slate-200 px-1.5 text-[10px] font-medium text-slate-700">
+                {outside}
+              </span>
+            )}
           </ToolbarButton>
           <ToolbarButton onClick={reloadRepo} title="Reler a pasta do disco (ex.: depois de um git pull)">
             <RefreshCw className="h-4 w-4" /> Recarregar

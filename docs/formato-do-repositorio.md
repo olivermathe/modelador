@@ -9,7 +9,8 @@ Tudo que o app lê e grava. Tipos TypeScript em `src/renderer/src/model/types.ts
 ├─ aplicações/    recursos (a biblioteca), inclusive endpoints
 ├─ tecnologias/   tecnologias
 ├─ relações/      relações (recurso→recurso, recurso→endpoint, recurso→tecnologia)
-└─ projetos/      desenhos (.json) e documentos (.md), em subpastas livres
+├─ projetos/      desenhos (.json) e documentos (.md), em subpastas livres
+└─ metamodelo.json  (opcional) relações permitidas entre tipos de recurso
 ```
 
 Regras gerais:
@@ -153,6 +154,36 @@ nada especial no formato: depois de criada, é uma pasta comum de `projetos/`.
 ## projetos/ — documentos
 
 `projetos/**/<nome>.md` — Markdown puro, gravado exatamente como digitado.
+
+## metamodelo.json — relações permitidas (opcional)
+
+Único arquivo da raiz que o app lê e grava. Diz que tipos de ligação ArchiMate (`relType`) cada par de
+tipos de recurso aceita. **Sem o arquivo, qualquer ligação vale** (repositórios antigos não mudam).
+
+```json
+{
+  "relations": {
+    "service": {
+      "database": ["access", "association"],
+      "endpoint": ["composition", "realization", "serving"]
+    },
+    "endpoint": {
+      "service": ["serving", "flow", "triggering"]
+    }
+  }
+}
+```
+
+| Campo | Regra |
+|---|---|
+| `relations[origem][destino]` | `origem`/`destino`: `type` de recurso (`system`, `service`, `database`, `queue`, `schema`, `endpoint`). Lista de `relType` aceitos, na ordem da paleta. Par ausente = nenhuma ligação entre esses tipos. |
+| Genérica | Ligação sem `relType` vale se o par aceita algum tipo. |
+| Fixa | Composição `system`/`service` → `endpoint` é sempre aceita (é o que diz de quem é o endpoint), mesmo fora da lista. |
+
+Só ligações `flow` entre recursos são conferidas (`uses` → tecnologia, não). Ligações que já existem e
+ficaram fora da regra não são alteradas nem apagadas: o app as lista como "fora da regra". O app grava só
+os pares com algum tipo, na ordem da tabela (`metamodelToSave`); tipos desconhecidos são descartados ao
+ler. Código: `model/metamodel.ts`.
 
 ## Nomes das pastas: português ou inglês
 

@@ -100,7 +100,7 @@ export function RepoPanel(): JSX.Element {
         .map((p) => [p, { nodes: [], edges: [], shapes: [] }])
     )
     const docs = Object.fromEntries(docPaths.split('\n').filter(Boolean).map((p) => [p, '']))
-    return buildTree({ resources, technologies, relations, diagrams, docs, paths, otherFiles, pendingFiles: {}, dirs })
+    return buildTree({ resources, technologies, relations, diagrams, docs, paths, otherFiles, pendingFiles: {}, dirs, metamodel: null })
   }, [resources, technologies, relations, diagramPaths, docPaths, paths, otherFiles, dirs])
 
   const visibleTree = useMemo(() => {

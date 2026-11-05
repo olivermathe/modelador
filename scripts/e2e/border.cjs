@@ -21,7 +21,7 @@ run(async (t) => {
   t.step('faixas da borda só respondem com a ferramenta Ligar')
   const off = await t.js(`getComputedStyle($node('Portal do Cliente').querySelector('.anchor-border-top')).pointerEvents`)
   t.assert(off === 'none', `sem Ligar: ${off}`)
-  await t.js(`document.querySelector('aside [aria-label="Serve"]').click()`)
+  await t.js(`document.querySelector('aside [aria-label="Fluxo"]').click()`)
   await t.wait(200)
   const on = await t.js(`getComputedStyle($node('Portal do Cliente').querySelector('.anchor-border-top')).pointerEvents`)
   t.assert(on !== 'none', `com Ligar: ${on}`)

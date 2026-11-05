@@ -1,9 +1,9 @@
 import type { MarkerKind } from '@/model/archimate'
-import { IMPACTS } from '@/model/elementTypes'
+import { CONFORMANCE, IMPACTS } from '@/model/elementTypes'
 
 /** Cores em que as pontas existem: as de impacto + a de seleção. */
 export const SELECTED_STROKE = '#0ea5e9'
-const COLORS = [...new Set([...IMPACTS.map((i) => i.stroke), SELECTED_STROKE])]
+const COLORS = [...new Set([...IMPACTS.map((i) => i.stroke), ...CONFORMANCE.map((c) => c.stroke), SELECTED_STROKE])]
 
 export const markerId = (kind: MarkerKind, color: string): string => `am-${kind}-${color.replace('#', '')}`
 

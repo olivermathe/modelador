@@ -57,8 +57,31 @@ run(async (t) => {
   await t.wait(200)
   const shown = await t.js(`getComputedStyle($node('Portal do Cliente').querySelector('.anchor-point')).opacity`)
   t.assert(shown === '1', `visíveis com Ligar (opacidade ${shown})`)
+  t.assert(!(await t.js(`/Selecionar|Ligar/.test(document.querySelector('.react-flow__panel.top.left')?.textContent ?? '')`)), 'sem seletor Selecionar/Ligar no canto do desenho')
+
+  t.step('Paleta sem botão Selecionar; só o Esc sai de Ligar')
+  await t.js(`[...document.querySelectorAll('aside nav button')].find((b) => b.textContent.includes('Paleta'))?.click()`)
+  await t.wait(200)
+  t.assert(!(await t.js(`!!document.querySelector('aside [aria-label="Selecionar"]')`)), 'sem botão Selecionar')
+  await t.js(`document.querySelector('aside [aria-label="Genérica"]').click()`)
+  await t.wait(200)
+  const afterType = await t.js(`getComputedStyle($node('Portal do Cliente').querySelector('.anchor-point')).opacity`)
+  t.assert(afterType === '1', `escolher um tipo mostra os pontos (opacidade ${afterType})`)
+  await t.js(`document.querySelector('aside [aria-label="Genérica"]').click()`)
+  await t.wait(200)
+  t.assert((await t.js(`getComputedStyle($node('Portal do Cliente').querySelector('.anchor-point')).opacity`)) === '1', 'clicar de novo no tipo continua em Ligar')
+  await t.js(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'v' }))`)
+  await t.wait(200)
+  t.assert((await t.js(`getComputedStyle($node('Portal do Cliente').querySelector('.anchor-point')).opacity`)) === '1', 'V não sai de Ligar')
+  await t.js(`window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }))`)
+  await t.wait(200)
+  const afterEsc = await t.js(`getComputedStyle($node('Portal do Cliente').querySelector('.anchor-point')).opacity`)
+  t.assert(afterEsc === '0', `Esc esconde os pontos (opacidade ${afterEsc})`)
+  t.assert(await t.js(`document.querySelector('aside [aria-label="Genérica"]').getAttribute('aria-pressed') === 'false'`), 'tipo desmarcado')
+  await t.shot('paleta-ligacao.png')
 
   t.step('ligar por pontos específicos guarda os pontos no desenho')
+  await t.until(`document.querySelectorAll('.react-flow__edge').length > 0`)
   const edgesBefore = await t.js(`document.querySelectorAll('.react-flow__edge').length`)
   await t.js(`{
     const from = $node('Portal do Cliente').querySelector('[data-handleid="right-1"]');
@@ -70,7 +93,7 @@ run(async (t) => {
     for (let i = 1; i <= 8; i++) ev('mousemove', ax + (bx - ax) * i / 8, ay + (by - ay) * i / 8, document);
     ev('mouseup', bx, by, document);
   }`)
-  await t.wait(400)
+  await t.until(`document.querySelectorAll('.react-flow__edge').length === ${edgesBefore + 1}`)
   const edgesAfter = await t.js(`document.querySelectorAll('.react-flow__edge').length`)
   t.assert(edgesAfter === edgesBefore + 1, `nova ligação no desenho (${edgesBefore} → ${edgesAfter})`)
 
@@ -113,7 +136,7 @@ run(async (t) => {
     document.querySelector('.react-flow__pane').dispatchEvent(new DragEvent('dragover', opts));
     document.querySelector('.react-flow__pane').dispatchEvent(new DragEvent('drop', opts));
   }`)
-  await t.wait(400)
+  await t.until(`document.querySelectorAll('.react-flow__edge').length === ${withoutBase + 1}`)
   const withBase = await t.js(`document.querySelectorAll('.react-flow__edge').length`)
   t.assert(withBase === withoutBase + 1, `ligação API → Base voltou sozinha (${withoutBase} → ${withBase})`)
 

@@ -19,6 +19,7 @@ function Section({ title, hint, children }: { title: string; hint: string; child
 export function Palette(): JSX.Element {
   const newRelType = useModel((s) => s.newRelType)
   const setNewRelType = useModel((s) => s.setNewRelType)
+  const tool = useModel((s) => s.tool)
   const setTool = useModel((s) => s.setTool)
 
   return (
@@ -63,8 +64,12 @@ export function Palette(): JSX.Element {
         </div>
       </Section>
 
-      <Section title="Nova ligação" hint="Escolher um tipo ativa a ferramenta Ligar (L): os pontos de conexão aparecem nos recursos.">
+      <Section
+        title="Nova ligação"
+        hint="Escolha um tipo e arraste de um recurso até outro. Esc volta a mover e selecionar."
+      >
         <RelTypeGrid
+          highlight={tool === 'connect'}
           value={newRelType}
           onPick={(relType) => {
             setNewRelType(relType)

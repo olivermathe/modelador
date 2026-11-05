@@ -17,7 +17,8 @@
    ponto da borda) e `scripts/e2e/legend.cjs` (legenda de impacto) e
    `scripts/e2e/markdown-images.cjs` (imagens no preview do Markdown) e `scripts/e2e/skill.cjs` (arquivos
    escritos seguindo a skill de cadastro abrem e não são regravados) e `scripts/e2e/relations-tab.cjs`
-   (aba Relacionamentos) e `scripts/e2e/impact.cjs` (impacto por desenho e migração). Cada um termina com `Tudo certo` (código 0)
+   (aba Relacionamentos), `scripts/e2e/impact.cjs` (impacto por desenho e migração) e `scripts/e2e/metamodel.cjs`
+   (meta modelo: relações permitidas) e `scripts/e2e/views.cjs` (visões Impacto/Conformidade). Cada um termina com `Tudo certo` (código 0)
    ou lista as falhas (código 1). O caminho temporário impresso no fim tem o repositório resultante e as
    capturas de tela.
 3. Para mudanças visuais, tire uma captura no teste (`await t.shot('nome.png')`) e confira a imagem.

@@ -41,7 +41,9 @@ O repositório costuma estar no Git; regravar arquivos sem mudança polui o hist
 ## 4. Gravação restrita às 4 pastas
 
 - `safePath()` no processo principal recusa qualquer caminho fora das 4 pastas e traduz a pasta raiz
-  canônica para o nome real em disco.
+  canônica para o nome real em disco. Única exceção: `metamodelo.json` na raiz (meta modelo, opcional).
+- Sem `metamodelo.json`, nenhuma ligação é recusada. Com ele, ligações já existentes fora da regra nunca
+  são alteradas nem apagadas pelo app: só aparecem como aviso.
 - **Nomes das pastas em português ou inglês** (`FOLDER_ALIASES`), sem diferença de maiúsculas, acentos ou
   forma Unicode (NFC/NFD, comum no macOS e no Git). `locateFolders()` acha a pasta real. **Nunca renomeie a
   pasta do usuário** e não troque por `existsSync(join(root, 'aplicações'))`.
@@ -73,12 +75,15 @@ O repositório costuma estar no Git; regravar arquivos sem mudança polui o hist
   que já existe e endpoint com rota repetida entre as ligações de um recurso: o app **pergunta** (usar o
   existente / criar novo mantendo os dois). Criar novo nunca remove o outro.
 
-## 7. Cor significa impacto, e só impacto
+## 7. Cor significa impacto (ou conformidade, na visão de conformidade), nunca tipo
 
 > Pedido do usuário: remover as cores por tipo de recurso, porque confundiam com o impacto.
 
-- Recursos, endpoints e ligações ficam em **cinza neutro**. Verde/laranja/vermelho são exclusivos de
-  impacto Novo/Alterado/Excluído (`IMPACTS` em `model/elementTypes.ts`).
+- Cada **visão** do desenho (abas no canto) dá um único significado à cor:
+  - **Impacto** (padrão): recursos, endpoints e ligações ficam em **cinza neutro**; verde/laranja/vermelho
+    são exclusivos de impacto Novo/Alterado/Excluído (`IMPACTS` em `model/elementTypes.ts`).
+  - **Conformidade**: verde = conforme ao meta modelo, vermelho = não conforme (`CONFORMANCE`). O impacto
+    não aparece nessa visão. A legenda e o Exportar seguem a visão atual.
 - Não reintroduza cor por tipo, por método HTTP ou nos conectores. O tipo se distingue pelo ícone e pelo
   rótulo. (As etiquetas de tecnologia em roxo são a única exceção hoje.)
 - Seleção usa azul (`sky`), que não é cor de impacto.

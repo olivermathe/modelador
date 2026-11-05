@@ -9,7 +9,7 @@
  *
  * As regras espelham src/renderer/src/model/repo.ts (parseScan, computePaths) e store.ts.
  */
-import { readdirSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const ROOT = process.argv[2]
@@ -216,6 +216,35 @@ for (const r of relations.values()) {
   if (pairs.has(k)) warn(r.rel, `já existe ligação entre as mesmas pontas (${pairs.get(k)})`)
   else pairs.set(k, r.rel)
 }
+// Meta modelo (metamodelo.json na raiz): tipos de ligação aceitos entre tipos de recurso
+const META = join(ROOT, 'metamodelo.json')
+if (existsSync(META)) {
+  const { data } = load(META)
+  const rules = isObject(data) ? data.relations : undefined
+  if (data !== undefined && !isObject(rules)) err('metamodelo.json', 'precisa ter "relations": { "<tipo origem>": { "<tipo destino>": [tipos] } }')
+  for (const [source, targets] of Object.entries(isObject(rules) ? rules : {})) {
+    if (!TYPES.includes(source)) err('metamodelo.json', `tipo de origem inválido "${source}"`)
+    for (const [target, types] of Object.entries(isObject(targets) ? targets : {})) {
+      if (!TYPES.includes(target)) err('metamodelo.json', `tipo de destino inválido "${target}"`)
+      for (const t of Array.isArray(types) ? types : []) if (!REL_TYPES.includes(t)) err('metamodelo.json', `${source} → ${target}: tipo de ligação inválido "${t}"`)
+    }
+  }
+  // Composição dono → endpoint é sempre aceita (é o que diz de quem é o endpoint)
+  const allowed = (s, t) => [
+    ...(rules?.[s]?.[t] ?? []),
+    ...(t === 'endpoint' && (s === 'system' || s === 'service') ? ['composition'] : [])
+  ]
+  for (const r of relations.values()) {
+    const s = resources.get(r.sourceId)
+    const t = resources.get(r.targetId)
+    if (r.kind !== 'flow' || !s || !t) continue
+    const ok = allowed(s.type, t.type)
+    if (r.relType ? !ok.includes(r.relType) : !ok.length) {
+      err(r.rel, `fora do meta modelo: ${s.type} → ${t.type} ${ok.length ? `aceita ${ok.join(', ')}` : 'não aceita ligação'}, não ${r.relType ?? 'genérica'}`)
+    }
+  }
+}
+
 // Recurso ligado a dois endpoints com a mesma rota
 const routes = new Map()
 for (const r of relations.values()) {

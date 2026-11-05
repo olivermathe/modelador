@@ -1,6 +1,6 @@
 import { NodeResizer, type Node, type NodeProps } from '@xyflow/react'
 import { memo, useLayoutEffect, useRef, useState } from 'react'
-import { ELEMENT_TYPES, impactInfo } from '@/model/elementTypes'
+import { conformanceInfo, ELEMENT_TYPES, impactInfo } from '@/model/elementTypes'
 import { useModel } from '@/model/store'
 import { commitEndpointRoute } from './EndpointRouteEditor'
 import type { Impact, Resource } from '@/model/types'
@@ -16,8 +16,10 @@ export type ElementNodeData = {
   sized: boolean
   /** Travado neste desenho. */
   locked: boolean
-  /** Impacto neste desenho (a cor da borda). */
+  /** Impacto neste desenho (a cor da borda na visão de impacto). */
   impact?: Impact
+  /** Visão de conformidade: o recurso e as ligações dele no desenho seguem o meta modelo? */
+  conformant?: boolean
   /** Pontos livres da borda usados por ligações deste desenho. */
   anchors: string[]
 }
@@ -110,7 +112,10 @@ function ElementNodeComponent({ id, data, selected }: NodeProps<ElementFlowNode>
   }
 
 
-  const removed = data.impact === 'removed'
+  // Na visão de conformidade a borda diz se segue o meta modelo; na de impacto, o impacto
+  const conformance = data.conformant !== undefined
+  const removed = !conformance && data.impact === 'removed'
+  const border = conformance ? conformanceInfo(data.conformant!).border : impactInfo(data.impact).border
 
   return (
     <>
@@ -123,9 +128,10 @@ function ElementNodeComponent({ id, data, selected }: NodeProps<ElementFlowNode>
         handleStyle={{ width: 8, height: 8, borderRadius: 2 }}
       />
       <div
+        data-conformant={conformance ? String(data.conformant) : undefined}
         className={`relative rounded-lg border-2 bg-white shadow-sm transition-shadow ${
           sized ? 'min-h-full w-full' : 'w-60'
-        } ${impactInfo(data.impact).border} ${removed ? 'border-dashed opacity-70' : ''} ${
+        } ${border} ${removed ? 'border-dashed opacity-70' : ''} ${
           selected ? 'shadow-lg ring-2 ring-sky-400 ring-offset-2' : ''
         }`}
       >

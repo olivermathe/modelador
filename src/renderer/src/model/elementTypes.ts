@@ -60,6 +60,17 @@ export const IMPACTS: { value: Impact | undefined; label: string; badge: string;
 export const impactInfo = (impact: Impact | undefined): (typeof IMPACTS)[number] =>
   IMPACTS.find((i) => i.value === impact) ?? IMPACTS[0]
 
+/**
+ * Visão de conformidade: a cor diz se o item segue o meta modelo (mesmos tons de Novo/Excluído). Nessa
+ * visão o impacto não aparece; cada visão tem um só significado para a cor.
+ */
+export const CONFORMANCE: { value: boolean; label: string; border: string; stroke: string }[] = [
+  { value: true, label: 'Conforme', border: 'border-emerald-500', stroke: '#10b981' },
+  { value: false, label: 'Não conforme', border: 'border-rose-500', stroke: '#f43f5e' }
+]
+
+export const conformanceInfo = (ok: boolean): (typeof CONFORMANCE)[number] => CONFORMANCE[ok ? 0 : 1]
+
 export interface ShapeKindInfo {
   label: string
   icon: LucideIcon
@@ -72,7 +83,7 @@ export const SHAPE_KINDS: Record<ShapeKind, ShapeKindInfo> = {
   rounded: { label: 'Quadrado', icon: Square, width: 140, height: 140 },
   ellipse: { label: 'Elipse', icon: Circle, width: 160, height: 100 },
   text: { label: 'Texto', icon: Type, width: 180, height: 40 },
-  legend: { label: 'Legenda de impacto', icon: ListChecks, width: 190, height: 130 }
+  legend: { label: 'Legenda de cores', icon: ListChecks, width: 190, height: 130 }
 }
 
 export const SHAPE_KIND_ORDER: ShapeKind[] = ['rectangle', 'rounded', 'ellipse', 'text', 'legend']

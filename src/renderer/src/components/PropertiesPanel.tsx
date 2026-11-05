@@ -1,4 +1,4 @@
-import { ArrowLeftRight, ArrowRight, Check, Lock, LockOpen, Plus, Search, Trash2, X } from 'lucide-react'
+import { ArrowLeftRight, ArrowRight, Check, Grid3x3, Lock, LockOpen, Plus, Search, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import {
   ELEMENT_TYPE_ORDER,
@@ -11,6 +11,7 @@ import {
 import { displayPath, endpointsOf, impactIn, ownersOf, presentIds, technologiesOf, useModel } from '@/model/store'
 import { REPO_FOLDERS, type Connector, type Impact, type Relation, type Resource, type Shape, type Technology } from '@/model/types'
 import { ACCESS_MODES, ARCHIMATE_TYPES, relationNotation } from '@/model/archimate'
+import { allowedTypes, relationAllowed, ruleMessage } from '@/model/metamodel'
 import { NotationPreview } from './ArchimateMarkers'
 import { ORDER_ACTIONS } from './ContextMenu'
 import { askPermanentDelete } from './deleteActions'
@@ -825,12 +826,30 @@ function RelationProperties({ relation }: { relation: Relation }): JSX.Element {
 
 function RelationTypeField({ relation }: { relation: Relation }): JSX.Element {
   const updateRelation = useModel((s) => s.updateRelation)
+  const metamodel = useModel((s) => s.metamodel)
+  const source = useModel((s) => s.resources[relation.sourceId])
+  const target = useModel((s) => s.resources[relation.targetId])
   const [open, setOpen] = useState(false)
   const update = (patch: Partial<Relation>): void => updateRelation(relation.id, patch)
   const info = relation.relType ? ARCHIMATE_TYPES[relation.relType] : undefined
+  // Meta modelo: só os tipos aceitos entre os tipos dos dois recursos (Genérica, se o par aceita algum)
+  const rule = metamodel && source && target ? { types: allowedTypes(metamodel, source.type, target.type), metamodel, source, target } : undefined
+  const allowed = rule && [...(rule.types.length ? [undefined] : []), ...rule.types]
+  const outside = rule && !relationAllowed(rule.metamodel, { [source.id]: source, [target.id]: target }, relation)
 
   return (
     <div className="space-y-2">
+      {rule && outside && (
+        <div data-outside-metamodel className="flex gap-2 rounded-md border border-dashed border-slate-300 bg-slate-50 p-2 text-xs text-slate-600">
+          <Grid3x3 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-400" />
+          <span>
+            {ruleMessage(rule.metamodel, rule.source.type, rule.target.type, relation.relType)}{' '}
+            <button className="underline hover:text-slate-900" onClick={() => useModel.getState().setMetamodelOpen(true)}>
+              Ver meta modelo
+            </button>
+          </span>
+        </div>
+      )}
       <div>
         <span className="mb-1 block text-xs font-medium text-slate-500">Tipo (ArchiMate)</span>
         <button
@@ -844,6 +863,8 @@ function RelationTypeField({ relation }: { relation: Relation }): JSX.Element {
         {open && (
           <div className="mt-1 max-h-80 overflow-y-auto rounded-md border border-slate-200 px-1">
             <RelTypeList
+              allowed={allowed}
+              blockedReason={rule && `O meta modelo não aceita esse tipo de ${ELEMENT_TYPES[rule.source.type].label} para ${ELEMENT_TYPES[rule.target.type].label}.`}
               value={relation.relType}
               onPick={(relType) => {
                 setOpen(false)

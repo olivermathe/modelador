@@ -45,10 +45,11 @@ run(async (t) => {
   t.assert(!!(await t.js(`!!$node('Portal Web')`)), 'voltou ao nome anterior')
 
   t.step('dois cliques no caminho de um endpoint')
+  await t.until(`[...$node('POST').querySelectorAll('span')].find((s) => s.textContent === '/pedidos')`)
   await t.js(`$dbl([...$node('POST').querySelectorAll('span')].find((s) => s.textContent === '/pedidos'))`)
-  await t.wait(200)
+  await t.until(`$nodeInput()`)
   await t.js(`$confirm('/pedidos/novos')`)
-  await t.wait(300)
+  await t.until(`$node('/pedidos/novos')`)
   t.assert(!!(await t.js(`!!$node('/pedidos/novos')`)), 'caminho do endpoint atualizado')
 
   t.step('salvar')

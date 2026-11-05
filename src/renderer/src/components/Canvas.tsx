@@ -23,7 +23,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { NO_GUIDES, snapToGuides, type Guides, type Rect } from '@/model/alignment'
 import { areNested, containersOf, nestedWith } from '@/model/nesting'
 import { relationNotation } from '@/model/archimate'
-import { impactInfo } from '@/model/elementTypes'
+import { conformanceInfo, impactInfo } from '@/model/elementTypes'
+import { relationAllowed } from '@/model/metamodel'
 import { ownersOf, selectedIds, technologiesOf, useModel, type ZOrderOp } from '@/model/store'
 import { ArchimateMarkers, markerId, SELECTED_STROKE } from './ArchimateMarkers'
 import { ContextMenu, type ContextMenuState } from './ContextMenu'
@@ -32,7 +33,7 @@ import { borderStart } from './AnchorHandles'
 import { anchorAt, centerAnchor, DND_MIME, getDragPayload, isAnchorId, isBorderHandle, isFreeAnchor, parseAnchor } from './dnd'
 import { ElementNode, type ElementFlowNode } from './ElementNode'
 import { ShapeNode, type ShapeFlowNode } from './ShapeNode'
-import { ToolSwitch } from './ToolSwitch'
+import { ViewSwitch } from './ViewSwitch'
 
 const nodeTypes = { element: ElementNode, shape: ShapeNode }
 
@@ -181,6 +182,25 @@ export function Canvas(): JSX.Element {
     [diagram?.nodes]
   )
 
+  // Visão de conformidade: cada ligação do desenho segue o meta modelo? O recurso é conforme quando todas
+  // as ligações dele neste desenho são. Na visão de impacto, `conformance` fica vazio.
+  const view = useModel((s) => s.view)
+  const metamodel = useModel((s) => s.metamodel)
+  const conformance = useMemo(() => {
+    const edges = new Map<string, boolean>()
+    const nodes = new Map<string, boolean>()
+    if (view !== 'conformance' || !diagram) return { edges, nodes }
+    for (const id of diagram.edges) {
+      const rel = relations[id]
+      if (!rel) continue
+      const ok = relationAllowed(metamodel, resources, rel)
+      edges.set(id, ok)
+      if (!ok) for (const end of [rel.sourceId, rel.targetId]) nodes.set(end, false)
+    }
+    for (const n of diagram.nodes) if (!nodes.has(n.resourceId)) nodes.set(n.resourceId, true)
+    return { edges, nodes }
+  }, [view, metamodel, diagram, relations, resources])
+
   const nodes = useMemo<FlowNode[]>(() => {
     if (!diagram) return []
     // Pontos livres da borda usados pelas setas deste desenho, por item
@@ -214,6 +234,7 @@ export function Canvas(): JSX.Element {
             resource,
             locked: !!n.locked,
             impact: n.impact,
+            conformant: conformance.nodes.get(n.resourceId),
             anchors: freeOf(n.resourceId),
             technologies: technologiesOf(n.resourceId, relations, technologies).map((t) => t.technology.name),
             parentName:
@@ -242,7 +263,7 @@ export function Canvas(): JSX.Element {
       ...(shape.locked ? { draggable: false, selectable: false, style: { pointerEvents: 'none' as const } } : {})
     }))
     return [...shapeNodes, ...elementNodes]
-  }, [diagram, resources, relations, technologies, selected, measured])
+  }, [diagram, resources, relations, technologies, selected, measured, conformance])
 
   // Caixa de cada recurso no desenho (tamanho medido na tela, senão o escolhido, senão o padrão)
   const resourceRects = useMemo<Map<string, Rect>>(
@@ -338,10 +359,15 @@ export function Canvas(): JSX.Element {
       const strength = rel.relType === 'influence' && rel.strength ? rel.strength : ''
       const label = [strength, rel.label, rel.protocol && `[${rel.protocol}]`].filter(Boolean).join(' ')
       const isSelected = selected.edges.has(id)
-      // Cor do impacto; azul quando selecionada (as pontas precisam da mesma cor)
-      // Impacto é do desenho (feature), não da relação
-      const impact = diagram.edgeImpacts?.[id]
-      const color = isSelected ? SELECTED_STROKE : impactInfo(impact).stroke
+      // Cor do impacto (ou da conformidade, nessa visão); azul quando selecionada (as pontas precisam da
+      // mesma cor). Impacto é do desenho (feature), não da relação
+      const conformant = conformance.edges.get(id)
+      const impact = conformant === undefined ? diagram.edgeImpacts?.[id] : undefined
+      const color = isSelected
+        ? SELECTED_STROKE
+        : conformant !== undefined
+          ? conformanceInfo(conformant).stroke
+          : impactInfo(impact).stroke
       const notation = relationNotation(rel)
       return [
         {
@@ -356,20 +382,21 @@ export function Canvas(): JSX.Element {
           zIndex: zFor(source.resourceId, target.resourceId),
           style: {
             stroke: color,
-            strokeWidth: impact || isSelected ? 2 : 1.5,
+            strokeWidth: impact || isSelected || conformant !== undefined ? 2 : 1.5,
             // Excluída: tracejado longo, a menos que o tipo ArchiMate já tenha traço próprio
             strokeDasharray: notation.dash ?? (impact === 'removed' ? '10 5' : undefined)
           },
           markerStart: notation.start && markerId(notation.start, color),
           markerEnd: notation.end && markerId(notation.end, color),
           selected: isSelected,
+          data: conformant === undefined ? undefined : { conformant },
           labelBgPadding: [6, 3] as [number, number],
           labelBgBorderRadius: 4
         }
       ]
     })
     return [...relationEdges, ...connectorEdges]
-  }, [diagram, relations, selected, edgeZ, hiddenEdgeIds, resourceRects])
+  }, [diagram, relations, selected, edgeZ, hiddenEdgeIds, resourceRects, conformance])
 
   /** Retângulos de todos os itens do desenho, com o tamanho medido na tela. */
   const itemRects = useCallback((): Rect[] => {
@@ -587,8 +614,8 @@ export function Canvas(): JSX.Element {
   useEffect(() => {
     const onKey = (e: KeyboardEvent): void => {
       if (e.metaKey || e.ctrlKey || e.altKey || isEditingText()) return
-      if (e.key === 'v' || e.key === 'V') setTool('select')
-      else if (e.key === 'l' || e.key === 'L') setTool('connect')
+      // Sair de Ligar é só pelo Esc
+      if (e.key === 'l' || e.key === 'L') setTool('connect')
       else if (e.key === 'Escape' && useModel.getState().tool === 'connect') setTool('select')
     }
     window.addEventListener('keydown', onKey)
@@ -792,7 +819,7 @@ export function Canvas(): JSX.Element {
         <Controls showInteractive={false} />
         <MiniMap pannable zoomable className="!bg-slate-50" style={{ width: 160, height: 100 }} />
         <Panel position="top-left">
-          <ToolSwitch />
+          <ViewSwitch />
         </Panel>
         <ViewportPortal>
           <ArchimateMarkers />

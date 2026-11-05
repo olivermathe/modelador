@@ -1,6 +1,6 @@
 import { NodeResizer, type Node, type NodeProps } from '@xyflow/react'
 import { memo, useState } from 'react'
-import { IMPACTS } from '@/model/elementTypes'
+import { CONFORMANCE, IMPACTS } from '@/model/elementTypes'
 import { useModel } from '@/model/store'
 import { AnchorHandles } from './AnchorHandles'
 import { LockBadge } from './LockBadge'
@@ -22,8 +22,30 @@ const RADIUS: Record<Shape['kind'], string> = {
   legend: '6px'
 }
 
-/** Quadrinho de legenda: o que cada cor de impacto significa (borda dos recursos e cor das setas). */
+/**
+ * Quadrinho de legenda: o que cada cor significa (borda dos recursos e cor das setas), conforme a visão
+ * atual: impacto ou conformidade com o meta modelo.
+ */
 function ImpactLegend({ title, style }: { title: React.ReactNode; style: React.CSSProperties }): JSX.Element {
+  const view = useModel((s) => s.view)
+  if (view === 'conformance') {
+    return (
+      <div className="flex h-full w-full flex-col items-start gap-1.5 text-left">
+        <div className="font-semibold" style={style}>
+          {title}
+        </div>
+        {CONFORMANCE.map((c) => (
+          <div key={c.label} className="flex items-center gap-2 text-xs" style={{ color: style.color }} data-conformance={String(c.value)}>
+            <span className={`h-3.5 w-6 shrink-0 rounded-sm border-2 bg-white ${c.border}`} />
+            <svg width="22" height="6" className="shrink-0">
+              <line x1="0" y1="3" x2="22" y2="3" stroke={c.stroke} strokeWidth="2" />
+            </svg>
+            {c.label}
+          </div>
+        ))}
+      </div>
+    )
+  }
   return (
     <div className="flex h-full w-full flex-col items-start gap-1.5 text-left">
       <div className="font-semibold" style={style}>

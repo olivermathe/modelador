@@ -1,0 +1,242 @@
+{
+  "relations": {
+    "system": {
+      "system": [
+        "composition",
+        "aggregation",
+        "realization",
+        "serving",
+        "triggering",
+        "flow",
+        "specialization",
+        "association"
+      ],
+      "service": [
+        "composition",
+        "aggregation",
+        "realization",
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "database": [
+        "composition",
+        "aggregation",
+        "access",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "queue": [
+        "composition",
+        "aggregation",
+        "access",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "schema": [
+        "access",
+        "association"
+      ],
+      "endpoint": [
+        "composition",
+        "aggregation",
+        "realization",
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ]
+    },
+    "service": {
+      "system": [
+        "composition",
+        "aggregation",
+        "realization",
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "service": [
+        "composition",
+        "aggregation",
+        "realization",
+        "serving",
+        "triggering",
+        "flow",
+        "specialization",
+        "association"
+      ],
+      "database": [
+        "composition",
+        "aggregation",
+        "access",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "queue": [
+        "composition",
+        "aggregation",
+        "access",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "schema": [
+        "access",
+        "association"
+      ],
+      "endpoint": [
+        "composition",
+        "aggregation",
+        "realization",
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ]
+    },
+    "database": {
+      "system": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "service": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "database": [
+        "composition",
+        "aggregation",
+        "flow",
+        "specialization",
+        "association"
+      ],
+      "queue": [
+        "composition",
+        "aggregation",
+        "flow",
+        "association"
+      ],
+      "schema": [
+        "composition",
+        "aggregation",
+        "association"
+      ],
+      "endpoint": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ]
+    },
+    "queue": {
+      "system": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "service": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "database": [
+        "composition",
+        "aggregation",
+        "flow",
+        "association"
+      ],
+      "queue": [
+        "composition",
+        "aggregation",
+        "flow",
+        "specialization",
+        "association"
+      ],
+      "schema": [
+        "composition",
+        "aggregation",
+        "association"
+      ],
+      "endpoint": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ]
+    },
+    "schema": {
+      "system": [
+        "association"
+      ],
+      "service": [
+        "association"
+      ],
+      "database": [
+        "composition",
+        "aggregation",
+        "association"
+      ],
+      "queue": [
+        "composition",
+        "aggregation",
+        "association"
+      ],
+      "schema": [
+        "composition",
+        "aggregation",
+        "specialization",
+        "association"
+      ],
+      "endpoint": [
+        "association"
+      ]
+    },
+    "endpoint": {
+      "system": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "service": [
+        "serving",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "database": [
+        "access",
+        "association"
+      ],
+      "queue": [
+        "access",
+        "triggering",
+        "flow",
+        "association"
+      ],
+      "schema": [
+        "access",
+        "association"
+      ],
+      "endpoint": [
+        "serving",
+        "triggering",
+        "flow",
+        "specialization",
+        "association"
+      ]
+    }
+  }
+}

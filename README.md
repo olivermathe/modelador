@@ -46,6 +46,7 @@ relações/     um arquivo .json por relação
                - flow: recurso → recurso ou recurso → endpoint (seta nos desenhos)
                - uses: recurso → tecnologia (etiqueta no recurso)
 projetos/      desenhos (.json) e documentos Markdown (.md), em qualquer estrutura de subpastas
+metamodelo.json  (opcional) que tipos de ligação cada par de tipos de recurso aceita
 ```
 
 Recursos, tecnologias e relações existem **uma vez**. Os desenhos em `projetos/` guardam só os ids e as
@@ -125,16 +126,20 @@ arquivos próprios).
 - **Ligações entre formas**: com a ferramenta Ligar, arraste de uma forma para outra forma (ou para um recurso).
   É uma ligação só visual: fica no desenho, não vira relação de arquitetura. No painel: rótulo, seta, linha
   tracejada e cor.
-- **Legenda de impacto**: arraste o ícone de legenda (em Formas, na Paleta) para o desenho. O quadrinho mostra
-  o que cada cor significa (borda dos recursos e cor das setas); dois cliques editam o título, e ele se
-  move, redimensiona e trava como uma forma.
+- **Visões (Impacto e Conformidade)**: abas no canto superior esquerdo do desenho. **Impacto** é a visão
+  normal (cor = impacto da feature). **Conformidade** pinta de verde o que segue o meta modelo e de vermelho o
+  que não segue: a ligação fora da regra e os recursos ligados por ela neste desenho. A aba mostra quantas
+  ligações do desenho estão fora. Exportar JPEG exporta a visão aberta.
+- **Legenda de cores**: arraste o ícone de legenda (em Formas, na Paleta) para o desenho. O quadrinho mostra
+  o que cada cor significa na visão atual (Sem alteração/Novo/Alterado/Excluído, ou Conforme/Não conforme);
+  dois cliques editam o título, e ele se move, redimensiona e trava como uma forma.
 - **Formas**: arraste Retângulo, Quadrado, Elipse ou Texto. Dois cliques editam o texto; com a forma selecionada,
   arraste os cantos para redimensionar e use o painel para cores, borda e tamanho do texto.
 - **Tamanho dos recursos**: selecione o recurso e arraste as alças dos cantos/bordas. O tamanho vale só para
   aquele desenho. O mínimo acompanha o conteúdo: ao estreitar, o texto quebra linha e a altura cresce, para nada
   ficar escondido. "Voltar ao tamanho automático" no painel desfaz.
-- **Ligar recursos**: ative a ferramenta **Ligar** (botão no canto do desenho, tecla L, ou escolhendo um tipo
-  em "Nova ligação" na Paleta). Os pontos de conexão aparecem só com ela ativa: arraste de um ponto até outro
+- **Ligar recursos**: escolha o tipo da ligação em "Nova ligação", na Paleta (ou tecla L). **Esc** volta a mover
+  e selecionar. Os pontos de conexão aparecem só com ela ativa: arraste de um ponto até outro
   recurso. Não precisa mirar nas bolinhas: comece em qualquer ponto da borda (ela fica azulada ao passar o
   mouse) e solte em qualquer lugar do outro recurso; a seta encosta no ponto da borda mais perto de onde você
   soltou. O ponto escolhido fica guardado; arrastar a ponta de uma seta troca o ponto (também em qualquer
@@ -148,6 +153,13 @@ arquivos próprios).
 - **Tipos de ligação ArchiMate**: Composição, Agregação, Atribuição, Realização, Serve, Acesso (lê/grava),
   Influência (+/−), Disparo, Fluxo, Especialização e Associação, cada um com a notação oficial. Escolha o tipo
   das próximas ligações em "Nova ligação", na Paleta, ou mude na aba Propriedades da relação.
+- **Meta modelo (relações permitidas)**: o botão **Meta modelo** na barra abre uma tabela tipo de origem (linha)
+  × tipo de destino (coluna). Comece com a sugestão inspirada no ArchiMate ou vazio e clique numa célula para
+  marcar os tipos de ligação aceitos ("N em uso" mostra quantas ligações já usam cada um). Com meta modelo, o
+  app não cria uma ligação fora da regra (avisa quais tipos são aceitos); se o par aceita um tipo só, a ligação
+  já nasce com ele, e o painel da relação só deixa escolher tipos aceitos. Ligações antigas fora da regra não
+  mudam: aparecem com aviso no painel, na lista da tela do meta modelo e como número no botão. Fica em
+  `metamodelo.json`, na raiz, gravado no Salvar; sem ele, qualquer ligação vale.
 - **Guias de alinhamento**: ao arrastar, linhas magenta aparecem quando bordas ou centros se alinham com outro
   item, e o item encaixa na posição.
 - **Markdown**: passe o mouse numa pasta de `projetos/` e clique em "Novo documento". O editor tem os modos

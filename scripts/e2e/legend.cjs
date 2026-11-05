@@ -8,7 +8,7 @@ run(async (t) => {
   await t.openDiagram('Visão geral')
 
   t.step('legenda aparece na Paleta, junto das formas')
-  t.assert(await t.js(`!!document.querySelector('aside [aria-label="Legenda de impacto"][draggable="true"]')`), 'item na Paleta')
+  t.assert(await t.js(`!!document.querySelector('aside [aria-label="Legenda de cores"][draggable="true"]')`), 'item na Paleta')
 
   t.step('soltar a legenda no desenho')
   await t.js(`{

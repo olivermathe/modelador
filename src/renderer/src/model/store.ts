@@ -2,6 +2,7 @@ import { create } from 'zustand'
 import { REPO_FOLDERS } from './types'
 import { ARCHIMATE_TYPES } from './archimate'
 import { ELEMENT_TYPES, SHAPE_KINDS } from './elementTypes'
+import { allowedTypes, relationAllowed, ruleMessage, type Metamodel } from './metamodel'
 import { endpointName, isInside, parseScan, slugify, type DiskSnapshot, type RepoContent } from './repo'
 import type {
   ArchimateRelType,
@@ -36,6 +37,9 @@ export interface ChoiceRequest {
 /** Ferramenta ativa no desenho: mover/selecionar ou ligar recursos pelos conectores. */
 export type CanvasTool = 'select' | 'connect'
 
+/** Visão do desenho: o que a cor quer dizer (impacto da feature ou conformidade com o meta modelo). */
+export type DiagramView = 'impact' | 'conformance'
+
 interface ModelState extends RepoContent {
   root: string | null
   /** Nome real em disco de cada pasta raiz (o repositório pode usar nomes em português ou inglês). */
@@ -55,6 +59,9 @@ interface ModelState extends RepoContent {
   /** Tipo ArchiMate usado nas próximas ligações desenhadas. */
   newRelType: ArchimateRelType | undefined
   tool: CanvasTool
+  /** Visão atual dos desenhos (só interface; não vai para os arquivos). Exportar usa a visão atual. */
+  view: DiagramView
+  setView: (view: DiagramView) => void
   /** Há o que desfazer/refazer (para os botões da barra). */
   history: { canUndo: boolean; canRedo: boolean }
   undo: () => void
@@ -76,6 +83,11 @@ interface ModelState extends RepoContent {
   featureDialog: { dir: string } | null
   /** Recurso que recebeu um nome já usado por outro; abre o aviso de recurso existente. */
   duplicateCheck: { resourceId: string; previousName: string } | null
+  /** Tela do meta modelo (relações permitidas) aberta. */
+  metamodelOpen: boolean
+  setMetamodelOpen: (open: boolean) => void
+  /** Cria, altera ou (com `null`) remove o meta modelo; vai para `metamodelo.json` no Salvar. */
+  setMetamodel: (metamodel: Metamodel | null) => void
 
   // Repositório
   loadRepo: (scan: RepoScan) => void
@@ -190,7 +202,8 @@ const emptyContent: RepoContent = {
   paths: {},
   otherFiles: [],
   pendingFiles: {},
-  dirs: []
+  dirs: [],
+  metamodel: null
 }
 
 const remap = (path: string, from: string, to: string): string =>
@@ -248,6 +261,8 @@ export const useModel = create<ModelState>((set, get) => ({
   dirty: false,
   newRelType: undefined,
   tool: 'select',
+  view: 'impact',
+  setView: (view) => set({ view }),
   featureDialog: null,
   notice: null,
   templateOriginals: {},
@@ -259,6 +274,9 @@ export const useModel = create<ModelState>((set, get) => ({
   redo: () => stepHistory('redo'),
   hiddenEdges: [],
   duplicateCheck: null,
+  metamodelOpen: false,
+  setMetamodelOpen: (metamodelOpen) => set({ metamodelOpen }),
+  setMetamodel: (metamodel) => set({ metamodel, dirty: true }),
 
   loadRepo: (scan) => {
     const { content, snapshot } = parseScan(scan)
@@ -276,6 +294,7 @@ export const useModel = create<ModelState>((set, get) => ({
         openDiagrams: first ? [first] : [],
         activeDiagram: first,
         selection: null,
+        metamodelOpen: false,
         dirty: migrated
       })
     )
@@ -285,7 +304,8 @@ export const useModel = create<ModelState>((set, get) => ({
   markSaved: (files, paths) => {
     withoutHistory(() =>
       set((s) => {
-        const dirs = [...new Set([...s.dirs, ...Object.keys(files).map((p) => p.split('/').slice(0, -1).join('/'))])]
+        // metamodelo.json fica na raiz: não é pasta
+        const dirs = [...new Set([...s.dirs, ...Object.keys(files).map((p) => p.split('/').slice(0, -1).join('/'))])].filter(Boolean)
         return { snapshot: { files, dirs, moves: [] }, paths, dirs, pendingFiles: {}, templateOriginals: {}, dirty: false }
       })
     )
@@ -671,6 +691,18 @@ export const useModel = create<ModelState>((set, get) => ({
     set((s) => {
       if (sourceId === targetId) return s
       const { resources, relations } = s
+
+      // Meta modelo: o par aceita a ligação? Genérica com um só tipo aceito já nasce com ele.
+      let relType = s.newRelType
+      const from = resources[sourceId]
+      const to = resources[targetId]
+      if (s.metamodel && from && to) {
+        const allowed = allowedTypes(s.metamodel, from.type, to.type)
+        if (!relType && allowed.length === 1) relType = allowed[0]
+        if (!relationAllowed(s.metamodel, resources, { kind: 'flow', sourceId, targetId, relType })) {
+          return { notice: { text: ruleMessage(s.metamodel, from.type, to.type, relType), at: Date.now() } }
+        }
+      }
       const again = (more: { endpoint?: boolean; relation?: boolean }) => () =>
         get().connect(sourceId, targetId, anchors, { ...skip, ...more })
 
@@ -723,7 +755,7 @@ export const useModel = create<ModelState>((set, get) => ({
       }
 
       const relation: Relation = { id: uid(), kind: 'flow', sourceId, targetId, label: '', protocol: '' }
-      if (s.newRelType) relation.relType = s.newRelType
+      if (relType) relation.relType = relType
       return {
         relations: { ...s.relations, [relation.id]: relation },
         ...updateActive(s, (d) => ({
@@ -742,6 +774,12 @@ export const useModel = create<ModelState>((set, get) => ({
     set((s) => {
       const rel = s.relations[id]
       if (!rel || rel.kind !== 'flow') return s
+      const reversed = { ...rel, sourceId: rel.targetId, targetId: rel.sourceId }
+      // Ao contrário, a ligação continua aceita pelo meta modelo? (se já estava fora, deixa inverter)
+      const [from, to] = [s.resources[reversed.sourceId], s.resources[reversed.targetId]]
+      if (s.metamodel && from && to && relationAllowed(s.metamodel, s.resources, rel) && !relationAllowed(s.metamodel, s.resources, reversed)) {
+        return { notice: { text: ruleMessage(s.metamodel, from.type, to.type, rel.relType), at: Date.now() } }
+      }
       const diagrams = Object.fromEntries(
         Object.entries(s.diagrams).map(([path, d]) => {
           const a = d.anchors?.[id]
@@ -750,7 +788,7 @@ export const useModel = create<ModelState>((set, get) => ({
         })
       )
       return {
-        relations: { ...s.relations, [id]: { ...rel, sourceId: rel.targetId, targetId: rel.sourceId } },
+        relations: { ...s.relations, [id]: reversed },
         diagrams,
         dirty: true
       }
@@ -1173,7 +1211,8 @@ const TRACKED = [
   'otherFiles',
   'pendingFiles',
   'paths',
-  'snapshot'
+  'snapshot',
+  'metamodel'
 ] as const
 type HistoryEntry = Pick<ModelState, (typeof TRACKED)[number] | 'dirty'>
 

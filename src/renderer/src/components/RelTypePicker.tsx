@@ -6,27 +6,39 @@ import { Tooltip } from './Tooltip'
 
 const GENERIC_NOTATION = { end: 'arrow-filled' as const }
 
-/** Lista dos tipos ArchiMate agrupados, com a miniatura da notação. */
+/**
+ * Lista dos tipos ArchiMate agrupados, com a miniatura da notação. `allowed` (meta modelo) desabilita os
+ * tipos que o par de recursos não aceita; `undefined` na lista = Genérica.
+ */
 export function RelTypeList({
   value,
-  onPick
+  onPick,
+  allowed,
+  blockedReason
 }: {
   value: ArchimateRelType | undefined
   onPick: (value: ArchimateRelType | undefined) => void
+  allowed?: (ArchimateRelType | undefined)[]
+  blockedReason?: string
 }): JSX.Element {
   const groups = [...new Set(ARCHIMATE_ORDER.map((t) => ARCHIMATE_TYPES[t].group))]
-  const row = (key: string, active: boolean, label: string, notation: Parameters<typeof NotationPreview>[0], title?: string, onClick?: () => void): JSX.Element => (
-    <button
-      key={key}
-      onClick={onClick}
-      title={title}
-      className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm ${active ? 'bg-sky-50 text-sky-900' : 'text-slate-700 hover:bg-slate-50'}`}
-    >
-      <NotationPreview {...notation} />
-      <span className="flex-1">{label}</span>
-      {active && <Check className="h-3.5 w-3.5 text-sky-600" />}
-    </button>
-  )
+  const row = (key: string, active: boolean, label: string, notation: Parameters<typeof NotationPreview>[0], title?: string, onClick?: () => void): JSX.Element => {
+    const blocked = !!allowed && !allowed.includes(key === 'generic' ? undefined : (key as ArchimateRelType))
+    return (
+      <button
+        key={key}
+        onClick={onClick}
+        disabled={blocked}
+        data-reltype={key}
+        title={blocked ? blockedReason : title}
+        className={`flex w-full items-center gap-2 rounded px-2 py-1 text-left text-sm disabled:cursor-not-allowed disabled:opacity-40 ${active ? 'bg-sky-50 text-sky-900' : 'text-slate-700 hover:bg-slate-50 disabled:hover:bg-transparent'}`}
+      >
+        <NotationPreview {...notation} />
+        <span className="flex-1">{label}</span>
+        {active && <Check className="h-3.5 w-3.5 text-sky-600" />}
+      </button>
+    )
+  }
   return (
     <div className="py-1">
       {row('generic', !value, 'Genérica', GENERIC_NOTATION, 'Seta simples, sem semântica ArchiMate', () => onPick(undefined))}
@@ -42,13 +54,15 @@ export function RelTypeList({
   )
 }
 
-/** Grade só com as miniaturas dos tipos; o nome aparece na dica ao passar o mouse. */
+/** Grade só com as miniaturas dos tipos; o nome aparece na dica ao passar o mouse. Sem `highlight`, nenhum fica marcado. */
 export function RelTypeGrid({
   value,
-  onPick
+  onPick,
+  highlight = true
 }: {
   value: ArchimateRelType | undefined
   onPick: (value: ArchimateRelType | undefined) => void
+  highlight?: boolean
 }): JSX.Element {
   const options: { key: string; value: ArchimateRelType | undefined; label: string; detail: string; notation: Parameters<typeof NotationPreview>[0] }[] = [
     { key: 'generic', value: undefined, label: 'Genérica', detail: 'Seta simples, sem semântica ArchiMate.', notation: GENERIC_NOTATION },
@@ -63,7 +77,7 @@ export function RelTypeGrid({
   return (
     <div className="grid grid-cols-4 gap-1.5">
       {options.map((o) => {
-        const active = o.value === value
+        const active = highlight && o.value === value
         return (
           <Tooltip key={o.key} label={o.label} detail={o.detail}>
             <button
