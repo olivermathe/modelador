@@ -13,6 +13,9 @@ erro e **não regrava nem renomeia nada** no próximo Salvar.
 os JSON direto nas pastas do repositório. O app só lê esses arquivos quando o usuário abrir ou recarregar
 o repositório.
 
+**Se o comando `modelador` estiver disponível no terminal, use a skill `usar-cli-modelador`**: ele aplica
+estas regras sozinho. Esta skill é para quando só dá para escrever arquivos.
+
 Funciona com qualquer agente que consiga ler e escrever arquivos. Se o agente puder rodar Node.js, use o
 validador `validar.mjs` (ao lado deste arquivo) no fim. Ele também só lê arquivos.
 

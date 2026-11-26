@@ -54,6 +54,7 @@ Caminhos relativos a `src/renderer/src/` (exceto onde indicado).
 | Pastas em português ou inglês | main `FOLDER_ALIASES`, `locateFolders`, `safePath`; scan devolve `folders`; store `folderNames`, `displayPath` |
 | Logo e ícones do app | `resources/icon.svg` (fonte), `scripts/icon.cjs` (`npm run icon`), `resources/icon.png`, `build/icon.icns`, `build/icon.ico`; main `ICON`, `app.dock.setIcon`; `Toolbar.tsx` (logo ao lado do nome) |
 | Migração de formatos antigos | `model/repo.ts` `parseScan` (endpoints dentro do serviço, `parentId` → Composição) |
+| Linha de comando para agentes (`modelador`) | `bin/modelador.mjs` (comandos), `bin/lib/repo.mjs` (leitura, nomes de arquivo como `computePaths`, meta modelo, exclusão, gravação só do que mudou); atalhos `bin/modelador`, `bin/modelador.cmd`; instruções `bin/AGENT.md`, skill `docs/skills/usar-cli-modelador/` |
 
 ## Atalhos
 
