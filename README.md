@@ -173,7 +173,30 @@ arquivos próprios).
   exemplo, depois de um `git pull`).
 - O app reabre automaticamente o último repositório usado.
 
-## Cadastrar com outro agente de IA
+## Linha de comando (para agentes como o Kiro CLI)
+
+`bin/modelador` cria, liga, renomeia, remove e coloca no desenho recursos, endpoints, tecnologias e ligações
+direto no repositório, com as mesmas regras do app (nomes de arquivo, meta modelo, sem duplicar). Precisa só
+do Node.js 18+. Coloque a pasta `bin/` no `PATH` (ou rode `npm link` aqui):
+
+```bash
+export PATH="$PWD/bin:$PATH"
+cd <pasta-do-repositorio>
+modelador ajuda
+modelador criar recurso --tipo servico --nome "Notificações"
+modelador criar endpoint --dono "Notificações" --metodo POST --caminho /notificacoes
+modelador ligar "pedido-criado" "Notificações" --tipo fluxo --protocolo Kafka
+modelador desenho colocar "Visão geral" "Notificações" --impacto novo
+modelador validar
+```
+
+`--json` dá saída para programas, `--simular` mostra o que mudaria sem gravar e `--repo <pasta>` (ou
+`MODELADOR_REPO`) escolhe o repositório. No Windows, `bin/modelador.cmd` é o atalho. Para agentes:
+[bin/AGENT.md](bin/AGENT.md) (instruções do agente) e a skill
+[docs/skills/usar-cli-modelador/SKILL.md](docs/skills/usar-cli-modelador/SKILL.md). Abra (ou Recarregue) o
+repositório no app para ver o resultado.
+
+## Cadastrar com outro agente de IA (sem a linha de comando)
 
 [docs/skills/cadastrar-recursos-e-ligacoes/SKILL.md](docs/skills/cadastrar-recursos-e-ligacoes/SKILL.md) é
 uma skill para qualquer agente de IA cadastrar recursos, endpoints, tecnologias e ligações escrevendo os

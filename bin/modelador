@@ -1,0 +1,3 @@
+#!/usr/bin/env node
+// Atalho sem extensão para o terminal (macOS/Linux): coloque esta pasta no PATH. O código fica em modelador.mjs.
+import('./modelador.mjs')
